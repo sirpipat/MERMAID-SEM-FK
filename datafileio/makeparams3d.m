@@ -1,12 +1,12 @@
 function params = makeparams3d
 % params = MAKEPARAMS3D
 %
-% Makes a sensible parameters for Par_file of SPECFEM3D_Cartesian.
+% Makes sensible parameters for Par_file of SPECFEM3D_Cartesian.
 %
 % SEE ALSO,
-% WRITEPARFILE3D
+% LOADPARFILE3D, WRITEPARFILE3D
 %
-% Last modified by Sirawich Pipatprathanporn, 09/13/2024
+% Last modified by Sirawich Pipatprathanporn, 09/17/2024
 
 params = struct(...
                     'SIMULATION_TYPE', 1                            , ...

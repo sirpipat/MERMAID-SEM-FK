@@ -1,5 +1,5 @@
 function writeparfile3d(params, fname)
-% WRITEPARFILE3D(params, fname, branch)
+% WRITEPARFILE3D(params, fname)
 %
 % Writes parameters to a Par_file of SPECFEM3D_Cartesian.
 %
@@ -14,7 +14,7 @@ function writeparfile3d(params, fname)
 % SEE ALSO:
 % LOADPARFILE3D, MAKEPARAMS3D
 %
-% Last modified by Sirawich Pipatprathanporn, 09/16/2024
+% Last modified by Sirawich Pipatprathanporn, 09/17/2024
 
 defval('params', makeparams3d())
 
