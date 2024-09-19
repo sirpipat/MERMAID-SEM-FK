@@ -17,14 +17,14 @@ function [itfs, layers] = loadinterfacefiles3d(fname)
 %       LAT_MIN                     minimum latitude  (or y value)
 %       SPACING_XI                  spacing in x-direction
 %       SPACING_ETA                 spacing in y-direction
-%       FILE                        elevation file
+%       FILE                        elevation file name
 %       Z                           elevation grid at (X,Y) or (LON,LAT)
 % layers        number of vertical spectral elements for each layer
 %
 % SEE ALSO:
 % MAKEINTERFACES3D, WRITEINTERFACEFILES3D
 %
-% Last modified by sirawich-at-princeton.edu, 09/18/2024
+% Last modified by sirawich-at-princeton.edu, 09/19/2024
 
 ddir = strcat(fileparts(fname), filesep);
 
@@ -65,7 +65,7 @@ for ii = 1:numinterfaces
     itfs{ii}.LON_MIN = nums(3);
     itfs{ii}.LAT_MIN = nums(4);
     itfs{ii}.SPACING_XI = nums(5);
-    itfs{ii}.SPACING_XI = nums(6);
+    itfs{ii}.SPACING_ETA = nums(6);
     
     line = strip(fgetl(fid));
     itfs{ii}.FILE = strcat(ddir, sscanf(line, '%s', 1));
