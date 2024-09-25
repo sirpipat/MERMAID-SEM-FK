@@ -37,9 +37,9 @@ function writecmtsolution3d(cmt, fname)
 % https://specfem3d.readthedocs.io/en/latest/05_running_the_solver/
 %
 % SEE ALSO:
-% LOADCMTSOLUTION3D
+% LOADCMTSOLUTION3D, MAKECMTSOLUTION3D
 %
-% Last modified by Sirawich Pipatprathanporn, 09/17/2024
+% Last modified by Sirawich Pipatprathanporn, 09/25/2024
 
 defval('fname', [])
 

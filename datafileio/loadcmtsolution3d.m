@@ -39,9 +39,9 @@ function cmt = loadcmtsolution3d(fname)
 % https://specfem3d.readthedocs.io/en/latest/05_running_the_solver/
 %
 % SEE ALSO:
-% LOADSOURCE, WRITECMTSOLUTION3D
+% LOADSOURCE, MAKECMTSOLUTION3D, WRITECMTSOLUTION3D
 %
-% Last modified by sirawich-at-princeton.edu, 09/16/2024
+% Last modified by sirawich-at-princeton.edu, 09/25/2024
 
 cmt = {};
 num_sources = 0;
