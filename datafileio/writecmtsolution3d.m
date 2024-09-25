@@ -42,6 +42,7 @@ function writecmtsolution3d(cmt, fname)
 % Last modified by Sirawich Pipatprathanporn, 09/25/2024
 
 defval('fname', [])
+defval('cmt', makecmtsolution3d)
 
 % open the file
 if isempty(fname)
