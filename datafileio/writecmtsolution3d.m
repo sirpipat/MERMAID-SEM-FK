@@ -31,6 +31,7 @@ function writecmtsolution3d(cmt, fname)
 %               - Mrt
 %               - Mrp
 %               - Mtp
+%               [default: makecmtsolution3d()]
 % fname         name of the Par_file
 %
 % The CMT solution format can be found at
@@ -39,7 +40,7 @@ function writecmtsolution3d(cmt, fname)
 % SEE ALSO:
 % LOADCMTSOLUTION3D, MAKECMTSOLUTION3D
 %
-% Last modified by Sirawich Pipatprathanporn, 09/25/2024
+% Last modified by Sirawich Pipatprathanporn, 09/30/2024
 
 defval('fname', [])
 defval('cmt', makecmtsolution3d)
