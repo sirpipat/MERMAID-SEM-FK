@@ -104,12 +104,15 @@ plot(t, r2d / max(abs(r2d)) - 4, 'LineWidth', 1, 'Color', 'k');
 xlabel('time (s)')
 xlim([0 tmax])
 legend('MERMAID Pressure', 'OBS Z-disp 1st arrival', ...
-    'Response function', 'Position', [0.6794 0.3535 0.1928 0.1371]);
+    sprintf('Response function (%s)', reg), ...
+    'Position', [0.6794 0.3535 0.1928 0.1371]);
 set(gca, 'TickDir', 'out', 'FontSize', 12)
-title(sprintf('SPECFEM2D: STF-Ricker %d Hz, lp -c %d -n %d -p 2', f_gaussian2d, fc, npoles))
+title(sprintf('SPECFEM2D: STF-Ricker %d Hz, lp -c %d -n %d -p 2', ...
+    f_gaussian2d, fc, npoles))
 nolabels(gca, 2)
 set(gcf, 'Renderer', 'painters')
-figdisp(sprintf('SPECFEM2D_TEST_Gaussian_%dHz_Response', f_gaussian2d), [], [], 2, [], 'epstopdf')
+figdisp(sprintf('%s_SPECFEM2D_TEST_Gaussian_%dHz_Response', mfilename, ...
+    f_gaussian2d), [], [], 2, [], 'epstopdf')
 
 figure(11)
 clf
@@ -123,12 +126,15 @@ plot(t, r3d / max(abs(r3d)) - 4, 'LineWidth', 1, 'Color', 'k');
 xlabel('time (s)')
 xlim([0 tmax])
 legend('MERMAID Pressure', 'OBS Z-disp 1st arrival', ...
-    'Response function', 'Position', [0.6794 0.3535 0.1928 0.1371]);
+    sprintf('Response function (%s)', reg), ...
+    'Position', [0.6794 0.3535 0.1928 0.1371]);
 set(gca, 'TickDir', 'out', 'FontSize', 12)
-title(sprintf('SPECFEM3D: STF-Gaussian %d Hz, lp -c %d -n %d -p 2', f_gaussian3d, fc, npoles))
+title(sprintf('SPECFEM3D: STF-Gaussian %d Hz, lp -c %d -n %d -p 2', ...
+    f_gaussian3d, fc, npoles))
 nolabels(gca, 2)
 set(gcf, 'Renderer', 'painters')
-figdisp(sprintf('FK-SPECFEM3D_TEST_Gaussian_%dHz_Response', f_gaussian3d), [], [], 2, [], 'epstopdf');
+figdisp(sprintf('%s_FK-SPECFEM3D_TEST_Gaussian_%dHz_Response', ...
+    mfilename, f_gaussian3d), [], [], 2, [], 'epstopdf');
 
 
 % Make a PSD plot comparing the PSD of two response functions
@@ -165,7 +171,8 @@ inverseaxis(ax2.XAxis, 'period (s)')
 ax2.YAxis.Label.String = ax.YAxis.Label.String;
 title(ax, 'Response function PSD', 'Position', [3.1623 135 0])
 set(gcf, 'Renderer', 'painters')
-figdisp(sprintf('SPECFEM3D_Compare_Responses_PSD_2D_%dHz_3D_%dHz', f_gaussian2d, f_gaussian3d), [], [], 2, [], 'epstopdf')
+figdisp(sprintf('%s_SPECFEM3D_Compare_Responses_PSD_2D_%dHz_3D_%dHz', ...
+    mfilename, f_gaussian2d, f_gaussian3d), [], [], 2, [], 'epstopdf')
 
 % Make plot response function comparison
 scale = 1.2 * max([max(abs(r2d)) max(abs(r3d)) max(abs(r3d - r2d))]);
@@ -207,8 +214,10 @@ b_text = max(abs(r3d(t <= tmax) - r2d(t <= tmax))) / 10^e_text;
 t_text = sprintf('%.2f \\times 10^{%d}', b_text, e_text);
 text(x_text, y_text, t_text, 'FontSize', 12, 'Color', [0.6 0 0.3])
 xlabel('time (s)')
-title(sprintf('Response function difference: SPECFEM3D (%d Hz) - SPECFEM2D (%d Hz)', f_gaussian2d, f_gaussian3d))
+title(sprintf('Response function difference: SPECFEM3D (%d Hz) - SPECFEM2D (%d Hz)', ...
+    f_gaussian2d, f_gaussian3d))
 set(gca, 'TickDir', 'out', 'FontSize', 12)
 set(gcf, 'Renderer', 'painters')
-figdisp(sprintf('SPECFEM3D_Compare_Responses_TIME_2D_%dHz_3D_%dHz', f_gaussian2d, f_gaussian3d), [], [], 2, [], 'epstopdf')
+figdisp(sprintf('%s_SPECFEM3D_Compare_Responses_TIME_2D_%dHz_3D_%dHz', ...
+    mfilename, f_gaussian2d, f_gaussian3d), [], [], 2, [], 'epstopdf')
 end
