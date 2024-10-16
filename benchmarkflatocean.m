@@ -122,7 +122,7 @@ plot(t, pttmh3dlp / max(abs(pttmh3dlp)), 'LineWidth', 1, 'Color', [0 0.5 1]);
 hold on
 grid on
 plot(t, ztttemp / max(abs(ztttemp)) - 2, 'LineWidth', 1, 'Color', [0 0.7 0]);
-plot(t, r3d / max(abs(r3d)) - 4, 'LineWidth', 1, 'Color', 'k');
+plot(t, r3d / max(abs(r3d)) - 4, 'LineWidth', 1, 'Color', [.75 0 0]);
 xlabel('time (s)')
 xlim([0 tmax])
 legend('MERMAID Pressure', 'OBS Z-disp 1st arrival', ...
@@ -180,6 +180,8 @@ figure(14)
 clf
 set(gcf, 'Unit', 'inches', 'Position', [5 1.1 9 6]);
 subplot('Position', [0.06 0.72 0.88 0.22])
+plot(t, r3d, 'LineWidth', .5, 'Color', [.9 0.6 0.6])
+hold on
 plot(t, r2d, 'LineWidth', 1, 'Color', 'k')
 grid on
 xlim([0 tmax])
@@ -189,7 +191,9 @@ set(gca, 'TickDir', 'out', 'FontSize', 12)
 nolabels(gca, 1)
 
 subplot('Position', [0.06 0.42 0.88 0.22])
-plot(t, r3d, 'LineWidth', 1, 'Color', 'r')
+plot(t, r2d, 'LineWidth', .5, 'Color', [.6 .6 .6])
+hold on
+plot(t, r3d, 'LineWidth', 1, 'Color', [.75 0 0])
 grid on
 xlim([0 tmax])
 ylim([-1 1] * scale)
@@ -205,14 +209,14 @@ hold on
 xlim([0 tmax])
 ylim([-1 1] * scale)
 hline(gca, [-1; 1] * max(abs(r3d(t <= tmax) - r2d(t <= tmax))), ...
-    'LineStyle', '-', 'LineWidth', 0.25, 'Color', [0.6 0 0.3]);
+    'LineStyle', '-', 'LineWidth', 0.25, 'Color', [0.8 0.4 0]);
 [x_text_norm, y_text_norm] = true2normposition(gca, 2, ...
     max(abs(r3d(t <= tmax) - r2d(t <= tmax))));
 [x_text, y_text] = norm2trueposition(gca, x_text_norm, y_text_norm + 0.12);
 e_text = floor(log10(max(abs(r3d(t <= tmax) - r2d(t <= tmax)))));
 b_text = max(abs(r3d(t <= tmax) - r2d(t <= tmax))) / 10^e_text;
 t_text = sprintf('%.2f \\times 10^{%d}', b_text, e_text);
-text(x_text, y_text, t_text, 'FontSize', 12, 'Color', [0.6 0 0.3])
+text(x_text, y_text, t_text, 'FontSize', 12, 'Color', [0.8 0.4 0])
 xlabel('time (s)')
 title(sprintf('Response function difference: SPECFEM3D (%d Hz) - SPECFEM2D (%d Hz)', ...
     f_gaussian2d, f_gaussian3d))
