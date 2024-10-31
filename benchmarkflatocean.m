@@ -10,8 +10,8 @@ function benchmarkflatocean(f_gaussian2d, f_gaussian3d, fc, npoles, filter_zobs,
 % comparison of the response functions in time and frequency domains.
 %
 % INPUT:
-% f_gaussian2d      either 1 (default), 2, or 10
-% f_gaussian3d      either 1, 2 (default), or 10
+% f_gaussian2d      either 1 (default), 2, 4, or 10
+% f_gaussian3d      either 1, 2 (default), 4, or 10
 % fc                corner frequency for low-pass filtering [default: 2]
 % npoles            number of poles for low-pass filtering  [default: 4]
 % filter_zobs       whether to apply the filter to the first arrival of
@@ -24,7 +24,7 @@ function benchmarkflatocean(f_gaussian2d, f_gaussian3d, fc, npoles, filter_zobs,
 % SEE ALSO:
 % SPECTRALDIVISION
 %
-% Last modified by sirawich-at-princeton.edu, 10/17/2024
+% Last modified by sirawich-at-princeton.edu, 10/31/2024
 
 % define more PARAMETERS here
 defval('f_gaussian2d', 1);
@@ -42,10 +42,12 @@ if f_gaussian2d == 1
     outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian1Hz/';
 elseif f_gaussian2d == 2
     outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian2Hz/';
+elseif f_gaussian2d == 4
+    outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian4Hz/';
 elseif f_gaussian2d == 10
     outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian10Hz/';
 else
-    error('f_gaussian2d must be 1, 2, or 10')
+    error('f_gaussian2d must be 1, 2, 4, or 10')
 end
 [tobs2d, zobs2d] = getarrivaltemplate(outputdir2d);
 [tmh2d, pmh2d] = read_seismogram(fullfile(outputdir2d, 'OUTPUT_FILES', 'AA.S0001.PRE.semp'));
@@ -58,10 +60,12 @@ if f_gaussian3d == 1
     outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_1Hz/';
 elseif f_gaussian3d == 2
     outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_2Hz/';
+elseif f_gaussian3d == 4
+    outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_4Hz/';
 elseif f_gaussian3d == 10
     outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_10Hz/';
 else
-    error('f_gaussian3d must be 1, 2, or 10')
+    error('f_gaussian3d must be 1, 2, 4, or 10')
 end
 [tobs3d, zobs3d] = read_seismogram(fullfile(outputdir3d, 'OUTPUT_FILES', 'AA.OBS01.HXZ.semd'));
 [tmh3d, pmh3d] = read_seismogram(fullfile(outputdir3d, 'OUTPUT_FILES', 'MH.P0009.HXP.semp'));
