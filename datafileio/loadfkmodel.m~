@@ -13,7 +13,7 @@ function fkmodel = loadfkmodel(fname)
 % SEE ALSO:
 % MAKEFKMODEL, WRITEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 02/19/2025
+% Last modified by sirawich-at-princeton.edu, 09/16/2024
 
 fid = fopen(fname, 'r');
 
@@ -72,13 +72,11 @@ while true
     while strcmp(line(1), '#')
         line = fgetl(fid);
         if isempty(line) || ~ischar(line)
-            % used for breaking nested loops
-            fclose(fid);
-            return
+            break
         end
     end
     if isempty(line) || ~ischar(line)
-        break
+        return
     end
     words = split(strip(line));
     if strcmp(words{1}, 'ORIGIN_WAVEFRONT')

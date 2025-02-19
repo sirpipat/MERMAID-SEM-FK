@@ -9,7 +9,7 @@ function fkmodel = makefkmodel
 % SEE ALSO:
 % LOADFKMODEL, WRITEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 09/17/2024
+% Last modified by sirawich-at-princeton.edu, 02/19/2025
 
 % model description
 fkmodel.nlayers = 3;
@@ -38,4 +38,7 @@ fkmodel.twindow = 50;
 % optional
 fkmodel.origin_wavefront = nan(1,3);
 fkmodel.origin_time = nan;
+
+fkmodel.stf_type = nan;
+fkmodel.stf_file = "";
 end

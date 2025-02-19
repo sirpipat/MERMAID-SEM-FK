@@ -11,7 +11,7 @@ function writefkmodel(fkmodel, fname)
 % SEE ALSO:
 % LOADFKMODEL, MAKEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 02/19/2025
+% Last modified by sirawich-at-princeton.edu, 09/17/2024
 
 defval('fkmodel', makefkmodel)
 defval('fname', [])
@@ -70,12 +70,8 @@ else
     fprintf(fid, '#ORIGIN_TIME %.2f', fkmodel.origin_time);
 end
 if isnan(fkmodel.stf_type)
-    fprintf(fid, '#TIME_FUNCTION_TYPE 1\n');
-    fprintf(fid, '#NAME_OF_SOURCE_FILE \n');
-else
-    fprintf(fid, 'TIME_FUNCTION_TYPE %d\n', fkmodel.stf_type);
-    fprintf(fid, 'NAME_OF_SOURCE_FILE %s\n', fkmodel.stf_file);
-end
+    printf(fid, '#TIME_FUNCTION_TYPE 1\n');
+    printf(fid, '#S
 
 if fid >= 3
     fclose(fid);
