@@ -9,7 +9,7 @@ function fkmodel = makefkmodel
 % SEE ALSO:
 % LOADFKMODEL, WRITEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 02/19/2025
+% Last modified by sirawich-at-princeton.edu, 02/26/2025
 
 % model description
 fkmodel.nlayers = 3;
@@ -32,8 +32,14 @@ fkmodel.theta = 10;
 % frequency max
 fkmodel.fmax = 1;
 
+% sampling frequency
+fkmodel.fs = 10;
+
 % time window
 fkmodel.twindow = 50;
+
+% amplitude
+fkmodel.amplitude = 1;
 
 % optional
 fkmodel.origin_wavefront = nan(1,3);

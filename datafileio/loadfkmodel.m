@@ -3,6 +3,9 @@ function fkmodel = loadfkmodel(fname)
 %
 % Loads a FKMODEL file of SPECFEM3D_Cartesian.
 %
+% List of parameters is taken from:
+% src/specfem3D/couple_with_injection.f90 in SPECFEM3D_Cartesian code
+%
 % INPUT:
 % fname         name of the FKMODEL file
 %
@@ -13,83 +16,73 @@ function fkmodel = loadfkmodel(fname)
 % SEE ALSO:
 % MAKEFKMODEL, WRITEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 02/19/2025
+% Last modified by sirawich-at-princeton.edu, 02/26/2025
+
+% set default values
+fkmodel = makefkmodel;
 
 fid = fopen(fname, 'r');
-
-line = fgetl(fid);
-% skip the comments
-while strcmp(line(1), '#')
-    line = fgetl(fid);
-end
-fkmodel.nlayer = sscanf(line(7:end), '%d', 1);
-fkmodel.layers = cell(fkmodel.nlayer, 1);
-for ii = 1:fkmodel.nlayer
-    line = fgetl(fid);
-    numbers = sscanf(line(6:end), '%f');
-    fkmodel.layers{ii}.rho = numbers(2);
-    fkmodel.layers{ii}.vp = numbers(3);
-    fkmodel.layers{ii}.vs = numbers(4);
-    fkmodel.layers{ii}.ztop = numbers(5);
-end
-
-line = fgetl(fid);
-% skip the comments
-while strcmp(line(1), '#')
-    line = fgetl(fid);
-end
-fkmodel.wave = cindeks(split(line), 2);
-
-line = fgetl(fid);
-% skip the comments
-while strcmp(line(1), '#')
-    line = fgetl(fid);
-end
-fkmodel.baz = str2double(cindeks(split(line), 2));
-line = fgetl(fid);
-fkmodel.theta = str2double(cindeks(split(line), 2));
-
-line = fgetl(fid);
-% skip the comments
-while strcmp(line(1), '#')
-    line = fgetl(fid);
-end
-fkmodel.fmax = str2double(cindeks(split(line), 2));
-
-line = fgetl(fid);
-% skip the comments
-while strcmp(line(1), '#')
-    line = fgetl(fid);
-end
-fkmodel.twindow = str2double(cindeks(split(line), 2));
-
-% optional
-fkmodel.origin_wavefront = [nan nan nan];
-fkmodel.origin_time = nan;
 while true
     line = fgetl(fid);
-    % skip the comments
+    % skip comments
     while strcmp(line(1), '#')
         line = fgetl(fid);
-        if isempty(line) || ~ischar(line)
-            % used for breaking nested loops
-            fclose(fid);
-            return
-        end
     end
-    if isempty(line) || ~ischar(line)
+    % exit at the end of file
+    if ~isempty(line) && ~ischar(line)
         break
     end
-    words = split(strip(line));
-    if strcmp(words{1}, 'ORIGIN_WAVEFRONT')
-        fkmodel.origin_wavefront = [str2double(words{2}) ...
-            str2double(words{3}) str2double(words{4})];
-    elseif strcmp(words{1}, 'ORIGIN_TIME')
-        fkmodel.origin_time = str2double(words{2});
-    elseif strcmp(words{1}, 'TIME_FUNCTION_TYPE')
-        fkmodel.stf_type = str2double(words{2});
-    elseif strcmp(words{1}, 'NAME_OF_SOURCE_FILE')
-        fkmodel.stf_file = words{2};
+    
+    % check variable names in FK model file
+    words = split(line);
+    switch words{1}
+        case 'NLAYER'
+            fkmodel.nlayers = str2double(words{2});
+        case 'LAYER'
+            fkmodel.layers = cell(fkmodel.nlayers, 1);
+            fkmodel.layers{1,1}.rho  = str2double(words{3});
+            fkmodel.layers{1,1}.vp   = str2double(words{4});
+            fkmodel.layers{1,1}.vs   = str2double(words{5});
+            fkmodel.layers{1,1}.ztop = str2double(words{6});
+            for ii = 2:fkmodel.nlayers
+                line = fgetl(fid);
+                words = split(line);
+                if strcmp(words{1}, 'LAYER')
+                    fkmodel.layers{ii}.rho  = str2double(words{3});
+                    fkmodel.layers{ii}.vp   = str2double(words{4});
+                    fkmodel.layers{ii}.vs   = str2double(words{5});
+                    fkmodel.layers{ii}.ztop = str2double(words{6});
+                else
+                    warning('One or more layers are missing');
+                    break
+                end
+            end
+        case 'INCIDENT_WAVE'
+            fkmodel.wave = words{2};
+        case 'BACK_AZIMITH'
+            fkmodel.baz = str2double(words{2});
+        case 'AZIMUTH'
+            fkmodel.baz = mod(str2double(words{2}) + 180, 360);
+        case 'TAKE_OFF'
+            fkmodel.theta = str2double(words{2});
+        case 'ORIGIN_WAVEFRONT'
+            fkmodel.origin_wavefront = [str2double(words{2}) ...
+                                        str2double(words{3}) ...
+                                        str2double(words{4})];
+        case 'ORIGIN_TIME'
+            fkmodel.origin_time = str2double(words{2});
+        case 'FREQUENCY_MAX'
+            fkmodel.fmax = str2double(words{2});
+        case 'FREQUENCY_SAMPLING'
+            fkmodel.fs = str2double(words{2});
+        case 'TIME_WINDOE'
+            fkmodel.twindow = str2double(words{2});
+        case 'AMPLITUDE'
+            fkmodel.amplitude = str2double(words{2});
+        case 'TIME_FUNCTION_TYPE'
+            fkmodel.stf_type = str2double(words{2});
+        case 'NAME_OF_SOURCE_FILE'
+            fkmodel.stf_file = words{2};
     end
 end
 
