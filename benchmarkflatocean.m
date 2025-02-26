@@ -24,7 +24,7 @@ function benchmarkflatocean(f_gaussian2d, f_gaussian3d, fc, npoles, filter_zobs,
 % SEE ALSO:
 % SPECTRALDIVISION
 %
-% Last modified by sirawich-at-princeton.edu, 10/31/2024
+% Last modified by sirawich-at-princeton.edu, 02/26/2025
 
 % define more PARAMETERS here
 defval('f_gaussian2d', 1);
@@ -34,7 +34,7 @@ defval('npoles', 4);
 defval('filter_zobs', true);
 defval('reg', 'damp');
 defval('tmax', 30);
-ii_cutoff = 800;    % cutoff index
+ii_cutoff = 1000;    % cutoff index
 correct_demean = true;
 
 % SPECFEM2D
@@ -43,7 +43,7 @@ if f_gaussian2d == 1
 elseif f_gaussian2d == 2
     outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian2Hz/';
 elseif f_gaussian2d == 4
-    outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian4Hz/';
+    outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian4Hz_new/';
 elseif f_gaussian2d == 10
     outputdir2d = '/Users/sirawich/research/remote_specfem2d/flat_10936816_P0009_Gaussian10Hz/';
 else
@@ -61,7 +61,7 @@ if f_gaussian3d == 1
 elseif f_gaussian3d == 2
     outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_2Hz/';
 elseif f_gaussian3d == 4
-    outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_4Hz/';
+    outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_Gaussian4Hz_ORIGIN_TIME/';
 elseif f_gaussian3d == 10
     outputdir3d = '/Users/sirawich/research/remote_specfem3d/FK-FLAT_10936816_P0009_10Hz/';
 else
@@ -99,8 +99,9 @@ else
 end
 
 % removes the trailing signals
-zobstemp = zobs3dlp(1:ii_cutoff) .* shanning(ii_cutoff, 0.1);
-zobstemp = [zobstemp; zeros(length(zobs3dlp)-ii_cutoff, 1)];
+%zobstemp = zobs3dlp(1:ii_cutoff) .* shanning(ii_cutoff, 0.1);
+%zobstemp = [zobstemp; zeros(length(zobs3dlp)-ii_cutoff, 1)];
+zobstemp = zobs3dlp;
 
 % applies tiny random noise to the seismograms at the ocean bottom to avoid
 % error when calling pchave vi aspecdensplot.
