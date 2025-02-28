@@ -11,7 +11,7 @@ function writefkmodel(fkmodel, fname)
 % SEE ALSO:
 % LOADFKMODEL, MAKEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 02/19/2025
+% Last modified by sirawich-at-princeton.edu, 02/26/2025
 
 defval('fkmodel', makefkmodel)
 defval('fname', [])
@@ -45,36 +45,51 @@ fprintf(fid, '# incident wave p or sv\n');
 fprintf(fid, 'INCIDENT_WAVE     %s\n', fkmodel.wave);
 
 fprintf(fid, '#----------------------------------------\n');
-fprintf(fid, '# anlges of incomming wave\n');
+fprintf(fid, '# anlges of incoming wave\n');
 fprintf(fid, 'BACK_AZIMUTH           %.2f\n', fkmodel.baz);
 fprintf(fid, 'TAKE_OFF               %.2f\n', fkmodel.theta);
 
 fprintf(fid, '#----------------------------------------\n');
+fprintf(fid, ['# [SP] - This is actually the frequency scaling of the ' ...
+              'Gaussian in frequency domain\n']);
 fprintf(fid, 'FREQUENCY_MAX      %.2f\n', fkmodel.fmax);
 
 fprintf(fid, '#----------------------------------------\n');
-fprintf(fid, 'TIME_WINDOW       %.2f\n', fkmodel.twindow);
+fprintf(fid, ['# [SP] - target sampling frequency of the FK injection ' ...
+              'waveform\n']);
+fprintf(fid, 'FREQUENCY_SAMPLING %.2f\n', fkmodel.fs);
+
+fprintf(fid, '#----------------------------------------\n');
+fprintf(fid, 'TIME_WINDOW        %.2f\n', fkmodel.twindow);
 
 fprintf(fid, '#----------------------------------------\n');
 fprintf(fid, '# optional\n');
 if isnan(fkmodel.origin_wavefront)
-    fprintf(fid, '#ORIGIN_WAVEFRONT  0 0 -40000\n');
+    fprintf(fid, '#ORIGIN_WAVEFRONT   0 0 -40000\n');
 else
-    fprintf(fid, 'ORIGIN_WAVEFRONT  %.2f %.2f %.2f\n', ...
+    fprintf(fid, 'ORIGIN_WAVEFRONT   %.2f %.2f %.2f\n', ...
         fkmodel.origin_wavefront(1), fkmodel.origin_wavefront(2), ...
         fkmodel.origin_wavefront(3));
 end
-if isnan(fkmodel.origin_time)
-    fprintf(fid, '#ORIGIN_TIME 0.');
+if isnan(fkmodel.amplitude)
+    fprintf(fid, '#AMPLITUDE  1\n');
 else
-    fprintf(fid, '#ORIGIN_TIME %.2f', fkmodel.origin_time);
+    fprintf(fid, 'AMPLITUDE  %.2f\n', fkmodel.amplitude);
 end
+if isnan(fkmodel.origin_time)
+    fprintf(fid, '#ORIGIN_TIME  0.\n');
+else
+    fprintf(fid, 'ORIGIN_TIME   %.2f\n', fkmodel.origin_time);
+end
+
+fprintf(fid, '#----------------------------------------\n');
+fprintf(fid, '# optional\n');
 if isnan(fkmodel.stf_type)
-    fprintf(fid, '#TIME_FUNCTION_TYPE 1\n');
+    fprintf(fid, '#TIME_FUNCTION_TYPE   1\n');
     fprintf(fid, '#NAME_OF_SOURCE_FILE \n');
 else
-    fprintf(fid, 'TIME_FUNCTION_TYPE %d\n', fkmodel.stf_type);
-    fprintf(fid, 'NAME_OF_SOURCE_FILE %s\n', fkmodel.stf_file);
+    fprintf(fid, 'TIME_FUNCTION_TYPE   %d\n', fkmodel.stf_type);
+    fprintf(fid, 'NAME_OF_SOURCE_FILE  %s\n', fkmodel.stf_file);
 end
 
 if fid >= 3
