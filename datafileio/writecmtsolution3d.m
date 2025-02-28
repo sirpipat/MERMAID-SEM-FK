@@ -40,7 +40,7 @@ function writecmtsolution3d(cmt, fname)
 % SEE ALSO:
 % LOADCMTSOLUTION3D, MAKECMTSOLUTION3D
 %
-% Last modified by Sirawich Pipatprathanporn, 09/30/2024
+% Last modified by Sirawich Pipatprathanporn, 02/28/2025
 
 defval('fname', [])
 defval('cmt', makecmtsolution3d)
@@ -69,7 +69,10 @@ for ii = 1:length(cmt)
     fprintf(fid, '%s:\t%e\n', 'Mpp', cmt{ii}.Mpp);
     fprintf(fid, '%s:\t%e\n', 'Mrt', cmt{ii}.Mrt);
     fprintf(fid, '%s:\t%e\n', 'Mrp', cmt{ii}.Mrp);
-    fprintf(fid, '%s:\t%e\n\n', 'Mtp', cmt{ii}.Mtp);
+    fprintf(fid, '%s:\t%e', 'Mtp', cmt{ii}.Mtp);
+    if ii < length(cmt)
+        fprintf(fid, '\n');
+    end
 end
 
 % close the file
