@@ -11,12 +11,15 @@ function ddir = specfem3d_input_setup_flat(ddir, bottom, depth, freq, baz, theta
 % freq          characteristic frequency for built-in source-time function
 %               in FK code
 % baz           backazimuth of the plane wave entering the box
-% theta         incident angle in degrees
+% theta         incidence angle in degrees
 % fs            sampling frequency [Default: 10]
 % gpu_mode      whether to enable GPU MODE [Default: false]
 % stf           source-time function full filename --or--
 %               source-time function as [t x]
 %               [Default: [], using built-in Gaussian function in FK code]
+% origin_time   origin time of the seimogram (not working properly now)
+%               [Default: 0]
+% nsteps        number of time steps of the simulations [Default: 10000]
 %
 % OUTPUT:
 % ddir          directory for the input files
@@ -42,7 +45,7 @@ system(sprintf('mkdir %s/DATA/meshfem3D_files/', ddir));
 % xspecfem3d parameters
 params = makeparams3d;
 fparams = fullfile(ddir, 'DATA', 'Par_file');
-params.nsteps = nsteps;
+params.NSTEPS = nsteps;
 params.GPU_MODE = gpu_mode;
 writeparfile3d(params, fparams);
 
