@@ -19,7 +19,7 @@ function [t_rf, rf, d] = fkresponsefunction(ddir, id, reg, plt)
 % SEE ALSO:
 % SPECTRALDIVISION
 %
-% Last modified by sirawich-at-princeton.edu, 02/25/2025
+% Last modified by sirawich-at-princeton.edu, 03/07/2025
 
 defval('method', 'water')
 defval('plt', false)
@@ -27,15 +27,27 @@ defval('plt', false)
 % read the injected wave
 [t, ~, ~, vz, hdr] = readplotFKfile(strcat(ddir, ...
     sprintf('OUTPUT_FILES/plot_FK_Veloc.%d.dat', id)));
-z = cumsum(vz) * (t(2) - t(1));
 hdrwords = split(hdr);
+
+if str2double(hdrwords{20}) < -4128
+    z = cumsum(vz) * (t(2) - t(1));
+else
+    z = vz;
+end
 
 % read the source-time-function file
 fkmodel = loadfkmodel(strcat(ddir, 'DATA/FKMODEL'));
-[t0, z0] = readtimeseries(strcat(ddir, fkmodel.stf_file), false);
+if fkmodel.stf_type == 4
+    % Source-time function is defined by a STF file
+    [t0, z0] = readtimeseries(strcat(ddir, fkmodel.stf_file), false);
+    
+    % interpolate stf to the injected wave's time
+    z1 = shannon(t0, z0, t);
+else
+    % Source-time funciton is Gaussian with a characteristic frequency
+    z1 = fkmodel.fmax / sqrt(pi) * exp(-(t * fkmodel.fmax) .^ 2);
+end
 
-% interpolate stf to the injected wave's time
-z1 = shannon(t0, z0, t);
 
 % deconvolve
 [rf, ~, ~, d] = spectraldivision(detrend(z, 0), detrend(z1, 0), ...
@@ -75,6 +87,6 @@ if plt
     set(ax3, 'TickDir', 'out', 'FontSize', 12)
     
     set(gcf, 'Renderer', 'painters')
-    figdisp(mfilename, [], [], 2, [], 'epstopdf');
+    figdisp(sprintf('%s_%02d', mfilename, id), [], [], 2, [], 'epstopdf');
 end
 end
