@@ -24,7 +24,7 @@ function ddir = specfem3d_input_setup_flat(ddir, bottom, depth, freq, baz, theta
 % OUTPUT:
 % ddir          directory for the input files
 %
-% Last modified by sirawich-at-princeton.edu, 02/26/2025
+% Last modified by sirawich-at-princeton.edu, 03/12/2025
 
 defval('bottom', 4128)
 defval('depth', 1518)
@@ -45,7 +45,7 @@ system(sprintf('mkdir %s/DATA/meshfem3D_files/', ddir));
 % xspecfem3d parameters
 params = makeparams3d;
 fparams = fullfile(ddir, 'DATA', 'Par_file');
-params.NSTEPS = nsteps;
+params.NSTEP = nsteps;
 params.GPU_MODE = gpu_mode;
 writeparfile3d(params, fparams);
 
@@ -69,6 +69,7 @@ fkmodel.baz = baz;
 fkmodel.theta = theta;
 fkmodel.fmax = freq;
 fkmodel.fs = fs;
+fkmodel.twindow = params.NSTEP * params.DT;
 fkmodel.origin_time = origin_time;
 fkmodel.origin_wavefront = [-140000 -14000 -10000];
 if any(isnan(stf), 'all')
@@ -105,12 +106,15 @@ materials = {material1; material2};
 meshparams.NMATERIALS = 2;
 meshparams.MATERIALS = materials;
 % regions
+nz_all = 20;
+nz_top = round(nz_all*bottom/(meshparams.DEPTH_BLOCK_KM * 1000));
+nz_bottom = nz_all - nz_top;
 region1 = struct(...
     'NEX_XI_BEGIN'      , 1             , ...
     'NEX_XI_END'        , 56            , ...
     'NEX_ETA_BEGIN'     , 1             , ...
     'NEX_ETA_END'       , 56            , ...
-    'NZ_BEGIN'          , 11            , ...
+    'NZ_BEGIN'          , nz_bottom+1   , ...
     'NZ_END'            , 20            , ...
     'material_id'       , 1               ...
 );
@@ -121,7 +125,7 @@ region2 = struct(...
     'NEX_ETA_BEGIN'     , 1             , ...
     'NEX_ETA_END'       , 56            , ...
     'NZ_BEGIN'          , 1             , ...
-    'NZ_END'            , 10            , ...
+    'NZ_END'            , nz_bottom     , ...
     'material_id'       , 2               ...
 );
 meshparams.NREGIONS = 2;
@@ -155,6 +159,6 @@ itf2 = struct(...
     'Z', zeros(2,2) ...
 );
 itfs = {itf1; itf2};
-layers = [10; 10];
+layers = [nz_bottom; nz_top];
 writeinterfacefiles3d(itfs, layers, finterf);
 end
