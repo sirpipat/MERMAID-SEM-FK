@@ -13,7 +13,10 @@ function writestations3d(stations, fname)
 %       z               burial or z-coorndiate or depth 
 % fname             filename of a STATION file
 %
-% Last modified by sirawich-at-princeton.edu, 09/17/2024
+% SEE ALSO:
+% READSTATIONS3D
+%
+% Last modified by sirawich-at-princeton.edu, 03/14/2025
 
 if isempty(fname)
     % standard output aka console output
