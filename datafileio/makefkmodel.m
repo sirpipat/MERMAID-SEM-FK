@@ -9,7 +9,7 @@ function fkmodel = makefkmodel
 % SEE ALSO:
 % LOADFKMODEL, WRITEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 02/26/2025
+% Last modified by sirawich-at-princeton.edu, 03/26/2025
 
 % model description
 fkmodel.nlayers = 3;
