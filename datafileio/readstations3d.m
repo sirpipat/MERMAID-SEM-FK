@@ -16,7 +16,7 @@ function [n, name, network, x, y, z] = readstations3d(fname)
 % SEE ALSO:
 % WRITESTATIONS3D, READ_STATION
 %
-% Last modified by Sirawich Pipatprathanporn, 03/14/2025
+% Last modified by Sirawich Pipatprathanporn, 03/26/2025
 
 % read the station file as a table
 opts = detectImportOptions(fname, 'FileType', 'text');
@@ -30,13 +30,13 @@ if isempty(T)
     T = struct('Var1', {words(1)}, 'Var2', {words(2)}, ...
         'Var3', str2double(words{3}), ...
         'Var4', str2double(words{4}), ...
-        'Var5', str2double(words{5}));
+        'Var6', str2double(words{6}));
 end
 
 name = T.Var1;
 network = T.Var2;
 x = T.Var3;
 y = T.Var4;
-z = T.Var5;
+z = T.Var6;
 n = size(T, 1);
 end
