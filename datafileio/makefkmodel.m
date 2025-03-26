@@ -46,5 +46,5 @@ fkmodel.origin_wavefront = nan(1,3);
 fkmodel.origin_time = nan;
 
 fkmodel.stf_type = nan;
-fkmodel.stf_file = "";
+fkmodel.stf_file = "n/a";
 end
