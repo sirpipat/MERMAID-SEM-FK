@@ -23,13 +23,13 @@ function [t, x, z, ph] = fluidsolidarrivals(z_interface, z_station, rho_f, vp_f,
 % t             arrival time
 % x             displacement amplitude in the horizontal direction
 % z             displacement amplitude in the vertical direction
-% ph            phase (1 = P, 2 = SV)
+% ph            phase (1 = P, 2 = SV, + = up, - = down)
 %
 % EXAMPLE:
 % % run a demo
 % fluidsolidarrivals('demo');
 %
-% Last modified by sirawich-at-princeton.edu 03/07/2025
+% Last modified by sirawich-at-princeton.edu 03/26/2025
 
 %% demos
 if ischar(z_interface) && strcmp(z_interface, 'demo')
@@ -143,7 +143,7 @@ if strcmp(layer, "solid")
         (D_F2S_R .^ (0:nP-1)') * D_F2S_TP] * SGN_X];
     z = [z; [D_S2F_RP; D_S2F_T * (D_FREE_R .^ (1:nP)') .* ...
         (D_F2S_R .^ (0:nP-1)') * D_F2S_TP] * SGN_Z];
-    ph = [ph; ones(nP+1, 1)];
+    ph = [ph; -ones(nP+1, 1)];
     
     % down-going SV-wave
     % [P; P^bathS; P(A^A)S]     % A denote acoustic phase
@@ -154,7 +154,7 @@ if strcmp(layer, "solid")
     z = [z; [D_S2F_RSV; D_S2F_T * (D_FREE_R .^ (1:nSV)') .* ...
         (D_F2S_R .^ (0:nSV-1)') * D_F2S_TSV] * SGN_Z * ...
         sin(theta_s) / cos(theta)];
-    ph = [ph; repmat(2, [nSV+1, 1])];
+    ph = [ph; -repmat(2, [nSV+1, 1])];
 else
     % travel time of the first down-going acoustic wave
     tAA = 2 * z_station / (vp_f * cos(theta_f));
@@ -176,7 +176,7 @@ else
     t = [t; tAA + (0:n_down)' * tFF];
     x = [x; D_FREE_R * (D_F2S_R * D_FREE_R) .^ (0:n_down)' * SGN_X];
     z = [z; D_FREE_R * (D_F2S_R * D_FREE_R) .^ (0:n_down)' * SGN_Z];
-    ph = [ph; ones(n_down+1, 1)];
+    ph = [ph; -ones(n_down+1, 1)];
 end
 
 % sort arrival by time
