@@ -1,5 +1,5 @@
 function [t_rf, rf, d] = fkresponsefunction(ddir, id, reg, plt)
-% [t_rf, rf, d] = FKRESPONSEFUNCTION(ddir, reg, plt)
+% [t_rf, rf, d] = FKRESPONSEFUNCTION(ddir, id, reg, plt)
 %
 % Computes response function due to flat layers over half-space. It
 % deconvolve the injected wave (subjected to the layers) and the 
@@ -19,7 +19,7 @@ function [t_rf, rf, d] = fkresponsefunction(ddir, id, reg, plt)
 % SEE ALSO:
 % SPECTRALDIVISION
 %
-% Last modified by sirawich-at-princeton.edu, 03/07/2025
+% Last modified by sirawich-at-princeton.edu, 03/21/2025
 
 defval('method', 'water')
 defval('plt', false)
