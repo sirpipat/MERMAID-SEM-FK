@@ -29,7 +29,7 @@ function [t, x, z, ph] = fluidsolidarrivals(z_interface, z_station, rho_f, vp_f,
 % % run a demo
 % fluidsolidarrivals('demo');
 %
-% Last modified by sirawich-at-princeton.edu 03/26/2025
+% Last modified by sirawich-at-princeton.edu 04/03/2025
 
 %% demos
 if ischar(z_interface) && strcmp(z_interface, 'demo')
@@ -50,9 +50,9 @@ if ischar(z_interface) && strcmp(z_interface, 'demo')
     set(gcf, 'Units', 'inches', 'Position', [0 1 8 4])
     clf
     ax1 = subplot('Position', [0.09 0.55 0.88 0.33]);
-    stem(t(ph==1), x(ph==1) * sin(theta), 'LineWidth', 1)
+    stem(t(abs(ph)==1), x(abs(ph)==1) * sin(theta), 'LineWidth', 1)
     hold on
-    stem(t(ph==2), x(ph==2) * sin(theta), 'LineWidth', 1)
+    stem(t(abs(ph)==2), x(abs(ph)==2) * sin(theta), 'LineWidth', 1)
     xlim([-2 52])
     ylim([-1.1 1.1])
     grid on
@@ -71,9 +71,9 @@ if ischar(z_interface) && strcmp(z_interface, 'demo')
     set(ax1, 'TickDir', 'out', 'FontSize', 12)
     
     ax2 = subplot('Position', [0.09 0.14 0.88 0.33]);
-    stem(t(ph==1), z(ph==1) * cos(theta), 'LineWidth', 1)
+    stem(t(abs(ph)==1), z(abs(ph)==1) * cos(theta), 'LineWidth', 1)
     hold on
-    stem(t(ph==2), z(ph==2) * cos(theta), 'LineWidth', 1)
+    stem(t(abs(ph)==2), z(abs(ph)==2) * cos(theta), 'LineWidth', 1)
     xlim([-2 52])
     ylim([-1.1 1.1])
     grid on
@@ -107,8 +107,10 @@ D_F2S_TP   = D_F2S(2);   % transmitted P
 D_F2S_TSV  = D_F2S(3);   % transmitted SV
 
 %% sign to convert down-going wave to displacement
-SGN_X      =  1;
-SGN_Z      = -1;
+SGN_P_X      =  1;
+SGN_P_Z      = -1;
+SGN_SV_X     =  1;
+SGN_SV_Z     =  1;
 
 %% determine which layer the station is in
 if (z_interface > z_station)
@@ -123,14 +125,14 @@ z = 1;
 ph = 1;
 if strcmp(layer, "solid")
     % travel time of first down-going P-wave
-    tPP = 2 * (z_station - z_interface) / (vp_s * cos(theta));
+    tPP = 2 * (z_station - z_interface) * cos(theta) / vp_s;
     
     % travel time of first down-going SV-wave
-    tPSV = (z_station - z_interface) * (1 / (vp_s * cos(theta)) + ...
-        1 / (vs_s * cos(theta_s)));
+    tPSV = (z_station - z_interface) * (cos(theta) / vp_s + ...
+        cos(theta_s) / vs_s);
     
     % round-trip travel time of acoustic wave in the fluid layer
-    tFF = 2 * z_interface / (vp_f * cos(theta_f));
+    tFF = 2 * z_interface * cos(theta_f) / vp_f;
     
     % number of rounds
     nP = floor((t_max - tPP) / tFF);
@@ -140,27 +142,27 @@ if strcmp(layer, "solid")
     % [P; P^bathP; P(A^A)P]     % A denote acoustic phase
     t = [t; tPP + (0:nP)' * tFF];
     x = [x; [D_S2F_RP; D_S2F_T * (D_FREE_R .^ (1:nP)') .* ...
-        (D_F2S_R .^ (0:nP-1)') * D_F2S_TP] * SGN_X];
+        (D_F2S_R .^ (0:nP-1)') * D_F2S_TP] * SGN_P_X];
     z = [z; [D_S2F_RP; D_S2F_T * (D_FREE_R .^ (1:nP)') .* ...
-        (D_F2S_R .^ (0:nP-1)') * D_F2S_TP] * SGN_Z];
+        (D_F2S_R .^ (0:nP-1)') * D_F2S_TP] * SGN_P_Z];
     ph = [ph; -ones(nP+1, 1)];
     
     % down-going SV-wave
     % [P; P^bathS; P(A^A)S]     % A denote acoustic phase
     t = [t; tPSV + (0:nSV)' * tFF];
     x = [x; [D_S2F_RSV; D_S2F_T * (D_FREE_R .^ (1:nSV)') .* ...
-        (D_F2S_R .^ (0:nSV-1)') * D_F2S_TSV] * SGN_X * ...
+        (D_F2S_R .^ (0:nSV-1)') * D_F2S_TSV] * SGN_SV_X * ...
         cos(theta_s) / sin(theta)];
     z = [z; [D_S2F_RSV; D_S2F_T * (D_FREE_R .^ (1:nSV)') .* ...
-        (D_F2S_R .^ (0:nSV-1)') * D_F2S_TSV] * SGN_Z * ...
+        (D_F2S_R .^ (0:nSV-1)') * D_F2S_TSV] * SGN_SV_Z * ...
         sin(theta_s) / cos(theta)];
     ph = [ph; -repmat(2, [nSV+1, 1])];
 else
     % travel time of the first down-going acoustic wave
-    tAA = 2 * z_station / (vp_f * cos(theta_f));
+    tAA = 2 * z_station * cos(theta_f) / vp_f;
     
     % round-trip travel time of acoustic wave in the fluid layer
-    tFF = 2 * z_interface / (vp_f * cos(theta_f));
+    tFF = 2 * z_interface * cos(theta_f) / vp_f;
     
     % number of rounds
     n_up = floor(t_max / tFF);
@@ -174,8 +176,8 @@ else
     
     % down-going acoustic wave arrivals
     t = [t; tAA + (0:n_down)' * tFF];
-    x = [x; D_FREE_R * (D_F2S_R * D_FREE_R) .^ (0:n_down)' * SGN_X];
-    z = [z; D_FREE_R * (D_F2S_R * D_FREE_R) .^ (0:n_down)' * SGN_Z];
+    x = [x; D_FREE_R * (D_F2S_R * D_FREE_R) .^ (0:n_down)' * SGN_P_X];
+    z = [z; D_FREE_R * (D_F2S_R * D_FREE_R) .^ (0:n_down)' * SGN_P_Z];
     ph = [ph; -ones(n_down+1, 1)];
 end
 
