@@ -24,7 +24,7 @@ function ddir = specfem3d_input_setup_flat(ddir, bottom, depth, freq, baz, theta
 % OUTPUT:
 % ddir          directory for the input files
 %
-% Last modified by sirawich-at-princeton.edu, 03/26/2025
+% Last modified by sirawich-at-princeton.edu, 04/04/2025
 
 defval('bottom', 4128)
 defval('depth', 1518)
@@ -71,7 +71,7 @@ fkmodel.fmax = freq;
 fkmodel.fs = fs;
 fkmodel.twindow = params.NSTEP * params.DT;
 fkmodel.origin_time = origin_time;
-fkmodel.origin_wavefront = [-140000 -14000 -10000];
+fkmodel.origin_wavefront = [-14000 -14000 -10000];
 if any(isnan(stf), 'all')
     fkmodel.stf_type = 1;
     fkmodel.stf_file = "n/a";
