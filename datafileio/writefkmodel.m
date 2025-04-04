@@ -11,7 +11,7 @@ function writefkmodel(fkmodel, fname)
 % SEE ALSO:
 % LOADFKMODEL, MAKEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 02/26/2025
+% Last modified by sirawich-at-princeton.edu, 04/03/2025
 
 defval('fkmodel', makefkmodel)
 defval('fname', [])
@@ -45,7 +45,7 @@ fprintf(fid, '# incident wave p or sv\n');
 fprintf(fid, 'INCIDENT_WAVE     %s\n', fkmodel.wave);
 
 fprintf(fid, '#----------------------------------------\n');
-fprintf(fid, '# anlges of incoming wave\n');
+fprintf(fid, '# angles of incoming wave\n');
 fprintf(fid, 'BACK_AZIMUTH           %.2f\n', fkmodel.baz);
 fprintf(fid, 'TAKE_OFF               %.2f\n', fkmodel.theta);
 
