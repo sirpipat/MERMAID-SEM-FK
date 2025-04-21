@@ -1,7 +1,7 @@
 function plotoceanbottom3d(ddir3d, unit, plotdir)
 % PLOTOCEANBOTTOM3D(ddir3d, unit, plotdir)
 %
-% Plots the ocean bottom topography from SPECFEM3D and SPECFEM2D runs.
+% Plots the ocean bottom topography from a SPECFEM3D run.
 %
 % INPUT:
 % ddir3d        directory for a SPECFEM3D run
