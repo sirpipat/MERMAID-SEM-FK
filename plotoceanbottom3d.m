@@ -8,7 +8,7 @@ function plotoceanbottom3d(ddir3d, unit, plotdir)
 % unit          unit of lengths in the plots (either 'm' [default] or 'km')
 % plotdir       directory of the printed figure [Default: getenv('EPS')]
 %
-% Last modified by sirawich-at-princetonedu: 04/21/2025
+% Last modified by sirawich-at-princetonedu: 04/24/2025
 
 defval('unit', 'm')
 defval('plotdir', getenv('EPS'))
@@ -39,7 +39,7 @@ if strcmpi(words{1}, 'RANDOM')
     bottom = -5000;
     titlestring = sprintf('\\mu = %d | \\sigma^2 = %d | \\nu = %.1f | \\rho = %d', ...
         bottom / divisor, s2 / divisor^2, nu, rho / divisor);
-    clim = bottom / divisor + [-4 4] * 10 ^ ceil(log10(std(Z, [], 'all')));
+    clim = bottom / divisor + [-4 4] * sqrt(s2);
 else
     bottom = -str2double(cindeks(split(words{2}, '-'), 2));
     titlestring = sprintf('bottom = %d', bottom);
