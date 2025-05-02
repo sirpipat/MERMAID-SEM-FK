@@ -17,86 +17,84 @@ function plotlocamp(ddir2d, ddir3d, useflag, flipflag)
 % SEE ALSO:
 % SPECFEM2D_INPUT_SETUP, SPECFEM3D_INPUT_SETUP
 %
-% Last modified by sirawich-at-princeton.edu, 04/21/2025
+% Last modified by sirawich-at-princeton.edu, 05/02/2025
 
-defval('ddir2d', fullfile(getenv('REMOTE2D'), ...
-    'flat_10936816_P0009_Gaussian4Hz_new/'))
-defval('ddir3d', fullfile(getenv('REMOTE3D'), ...
-    'FK-FLAT_10936816_P0009_Gaussian4Hz_ORIGIN_TIME/'))
 defval('useflag', 'hydrophone')
 defval('flipflag', false)
 
-if strcmp(ddir2d, 'demo1')
-    ddir2d = fullfile(getenv('REMOTE2D'), ...
-        'flat_10936816_P0009_Gaussian4Hz_new/');
-    ddir3d = fullfile(getenv('REMOTE3D'), ...
-        'FK-FLAT_10936816_P0009_Gaussian4Hz_ORIGIN_TIME/');
-    useflag = 'hydrophone';
-    flipflag = false;
-    plotlocamp(ddir2d, ddir3d, useflag, flipflag);
-    figdisp(strcat(mfilename, '_BOTTOM_4128_THETA_10-4_', useflag), [], [], 2, [], 'epstopdf')
-    return
-elseif strcmp(ddir2d, 'demo2')
-    ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
-        'FLAT_BOTTOM-4000-THETA-00/');
-    ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250312', ...
-        'FK_FLAT_BAZ-225_BOTTOM-4000_THETA-00_STF-1_ORIGIN_TIME--2_NSTEPS-20000/');
-    useflag = 'hydrophone';
-    flipflag = true;
-    plotlocamp(ddir2d, ddir3d, useflag, flipflag);
-    figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_00_', useflag), [], [], 2, [], 'epstopdf')
-    return
-elseif strcmp(ddir2d, 'demo3')
-    ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
-        'FLAT_BOTTOM-4000-THETA-40/');
-    ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250401', ...
-        'FK_FLAT_BAZ-180_BOTTOM-4000_THETA-40_STF-2_ORIGIN_TIME-00_NSTEPS-20000/');
-    useflag = 'hydrophone';
-    flipflag = true;
-    plotlocamp(ddir2d, ddir3d, useflag, flipflag);
-    figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_40_', useflag), [], [], 2, [], 'epstopdf')
-    return
-elseif strcmp(ddir2d, 'demo4')
-    ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
-        'FLAT_BOTTOM-4000-THETA-10/');
-    ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250330', ...
-        'FK_FLAT_BAZ-180_BOTTOM-4000_THETA-10_STF-2_ORIGIN_TIME-00_NSTEPS-20000/');
-    useflag = 'hydrophone';
-    flipflag = true;
-    plotlocamp(ddir2d, ddir3d, useflag, flipflag);
-    figdisp(strcat(mfilename, '_BOTTOM_6000_THETA_10_', useflag), [], [], 2, [], 'epstopdf')
-    return
-elseif strcmp(ddir2d, 'demo5')
-    ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
-        'FLAT_BOTTOM-4000-THETA-10/');
-    ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250312_SMALL', ...
-        'FK_FLAT_BAZ-225_BOTTOM-4000_THETA-10_STF-1_ORIGIN_TIME--6_NSTEPS-20000/');
-    useflag = 'obs';
-    flipflag = true;
-    plotlocamp(ddir2d, ddir3d, useflag, flipflag);
-    figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_10_', useflag), [], [], 2, [], 'epstopdf')
-    return
-elseif strcmp(ddir2d, 'demo6')
-    ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
-        'FLAT_BOTTOM-6000-THETA-00/');
-    ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250312_SMALL', ...
-        'FK_FLAT_BAZ-225_BOTTOM-6000_THETA-00_STF-1_ORIGIN_TIME--6_NSTEPS-20000/');
-    useflag = 'hydrophone';
-    flipflag = true;
-    plotlocamp(ddir2d, ddir3d, useflag, flipflag);
-    figdisp(strcat(mfilename, '_BOTTOM_6000_THETA_00_', useflag), [], [], 2, [], 'epstopdf')
-    return
-elseif strcmp(ddir2d, 'demo7')
-    ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
-        'FLAT_BOTTOM-4000-THETA-00/');
-    ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250330', ...
-        'FK_FLAT_BAZ-180_BOTTOM-4000_THETA-00_STF-2_ORIGIN_TIME-00_NSTEPS-20000/');
-    useflag = 'hydrophone';
-    flipflag = true;
-    plotlocamp(ddir2d, ddir3d, useflag, flipflag);
-    figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_00_', useflag), [], [], 2, [], 'epstopdf')
-    return
-end
+% Demo calls from the past. Now obsoleted. I keep here for example calls
+% TODO: move to documentation
+% if strcmp(ddir2d, 'demo1')
+%     ddir2d = fullfile(getenv('REMOTE2D'), ...
+%         'flat_10936816_P0009_Gaussian4Hz_new/');
+%     ddir3d = fullfile(getenv('REMOTE3D'), ...
+%         'FK-FLAT_10936816_P0009_Gaussian4Hz_ORIGIN_TIME/');
+%     useflag = 'hydrophone';
+%     flipflag = false;
+%     plotlocamp(ddir2d, ddir3d, useflag, flipflag);
+%     figdisp(strcat(mfilename, '_BOTTOM_4128_THETA_10-4_', useflag), [], [], 2, [], 'epstopdf')
+%     return
+% elseif strcmp(ddir2d, 'demo2')
+%     ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
+%         'FLAT_BOTTOM-4000-THETA-00/');
+%     ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250312', ...
+%         'FK_FLAT_BAZ-225_BOTTOM-4000_THETA-00_STF-1_ORIGIN_TIME--2_NSTEPS-20000/');
+%     useflag = 'hydrophone';
+%     flipflag = true;
+%     plotlocamp(ddir2d, ddir3d, useflag, flipflag);
+%     figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_00_', useflag), [], [], 2, [], 'epstopdf')
+%     return
+% elseif strcmp(ddir2d, 'demo3')
+%     ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
+%         'FLAT_BOTTOM-4000-THETA-40/');
+%     ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250401', ...
+%         'FK_FLAT_BAZ-180_BOTTOM-4000_THETA-40_STF-2_ORIGIN_TIME-00_NSTEPS-20000/');
+%     useflag = 'hydrophone';
+%     flipflag = true;
+%     plotlocamp(ddir2d, ddir3d, useflag, flipflag);
+%     figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_40_', useflag), [], [], 2, [], 'epstopdf')
+%     return
+% elseif strcmp(ddir2d, 'demo4')
+%     ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
+%         'FLAT_BOTTOM-4000-THETA-10/');
+%     ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250330', ...
+%         'FK_FLAT_BAZ-180_BOTTOM-4000_THETA-10_STF-2_ORIGIN_TIME-00_NSTEPS-20000/');
+%     useflag = 'hydrophone';
+%     flipflag = true;
+%     plotlocamp(ddir2d, ddir3d, useflag, flipflag);
+%     figdisp(strcat(mfilename, '_BOTTOM_6000_THETA_10_', useflag), [], [], 2, [], 'epstopdf')
+%     return
+% elseif strcmp(ddir2d, 'demo5')
+%     ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
+%         'FLAT_BOTTOM-4000-THETA-10/');
+%     ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250312_SMALL', ...
+%         'FK_FLAT_BAZ-225_BOTTOM-4000_THETA-10_STF-1_ORIGIN_TIME--6_NSTEPS-20000/');
+%     useflag = 'obs';
+%     flipflag = true;
+%     plotlocamp(ddir2d, ddir3d, useflag, flipflag);
+%     figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_10_', useflag), [], [], 2, [], 'epstopdf')
+%     return
+% elseif strcmp(ddir2d, 'demo6')
+%     ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
+%         'FLAT_BOTTOM-6000-THETA-00/');
+%     ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250312_SMALL', ...
+%         'FK_FLAT_BAZ-225_BOTTOM-6000_THETA-00_STF-1_ORIGIN_TIME--6_NSTEPS-20000/');
+%     useflag = 'hydrophone';
+%     flipflag = true;
+%     plotlocamp(ddir2d, ddir3d, useflag, flipflag);
+%     figdisp(strcat(mfilename, '_BOTTOM_6000_THETA_00_', useflag), [], [], 2, [], 'epstopdf')
+%     return
+% elseif strcmp(ddir2d, 'demo7')
+%     ddir2d = fullfile(getenv('REMOTE2D'), 'FLAT_20250320', ...
+%         'FLAT_BOTTOM-4000-THETA-00/');
+%     ddir3d = fullfile(getenv('REMOTE3D'), 'ORIGIN_TIME_TEST_20250330', ...
+%         'FK_FLAT_BAZ-180_BOTTOM-4000_THETA-00_STF-2_ORIGIN_TIME-00_NSTEPS-20000/');
+%     useflag = 'hydrophone';
+%     flipflag = true;
+%     plotlocamp(ddir2d, ddir3d, useflag, flipflag);
+%     figdisp(strcat(mfilename, '_BOTTOM_4000_THETA_00_', useflag), [], [], 2, [], 'epstopdf')
+%     return
+% end
 
 %% Read seismograms from SPECFEM2D run
 try
@@ -392,7 +390,7 @@ pks3d = pks3d / pks3d(1);
 pks = pks / pks(1);
 
 % find the common peaks between simulations and predictions
-keeplength = min(length(locs3d), length(locs2d));
+keeplength = min(min(length(locs3d), length(locs2d)), length(locs));
 locs = locs(1:keeplength);
 pks = pks(1:keeplength);
 locs2d = locs2d(1:keeplength);
@@ -413,28 +411,12 @@ hold on
 refline(gca, 1, 0);
 legend('SPECFEM2D', 'SPECFEM3D', 'Location', 'best')
 set(gca, 'TickDir', 'out', 'FontSize', 12, 'Box', 'on')
-ylabel('SPECFEM3D (s)')
+ylabel('SPECFEM (s)')
 xlabel('Flat ocean bottom (s)')
 title('Arrival times')
 
 
 subplot('Position', [0.59 0.07 0.36 0.25])
-% scatter(pks, pks2d)
-% hold on
-% scatter(pks, pks3d)
-% grid on
-% XLIM = get(gca, 'XLim');
-% YLIM = get(gca, 'YLim');
-% set(gca, 'XLim', [min(XLIM(1), YLIM(1)) max(XLIM(2), YLIM(2))], ...
-%     'YLim', [min(XLIM(1), YLIM(1)) max(XLIM(2), YLIM(2))])
-% hold on
-% refline(gca, 1, 0);
-% legend('SPECFEM2D', 'SPECFEM3D', 'Location', 'northwest')
-% set(gca, 'TickDir', 'out', 'FontSize', 12, 'Box', 'on')
-% ylabel('SPECFEM')
-% xlabel('Ray Theory')
-% title('Amp rel to 1st arrival')
-
 scatter(locs, locs2d - locs, 'filled')
 hold on
 scatter(locs, locs3d - locs, 'filled')
@@ -449,24 +431,4 @@ set(gcf, 'Renderer', 'painters')
 savename = strcat(mfilename, '_', removepath(ddir3d), '_', useflag);
 savename = replace(savename, '.', 'p');
 figdisp(savename, [], [], 2, [], 'epstopdf')
-end
-
-function [Ypk,Xpk,Wpk,Ppk] = findpeakstopbottom(Yin,varargin)
-% top peaks
-[Ypk_top,Xpk_top,Wpk_top,Ppk_top] = findpeaks(Yin,varargin{:});
-
-% bottom peaks
-[Ypk_bot,Xpk_bot,Wpk_bot,Ppk_bot] = findpeaks(-Yin,varargin{:});
-
-% merge
-Ypk = [Ypk_top; -Ypk_bot];
-Xpk = [Xpk_top; Xpk_bot];
-Wpk = [Wpk_top; Wpk_bot];
-Ppk = [Ppk_top; -Ppk_bot];
-
-% sort by X-value
-[Xpk, iXpk] = sort(Xpk);
-Ypk = Ypk(iXpk);
-Wpk = Wpk(iXpk);
-Ppk = Ppk(iXpk);
 end
