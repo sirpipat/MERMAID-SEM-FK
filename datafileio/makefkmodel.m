@@ -124,7 +124,12 @@ fkmodel.origin_time = nan;
 fkmodel.stf_type = nan;
 fkmodel.stf_file = "n/a";
 
+% modify fkmodel from keyword argument pairs
 for ii = 1:2:length(varargin)
-    fkmodel.(varargin{ii}) = varargin{ii+1};
+    if isfield(fkmodel, lower(varargin{ii}))
+        fkmodel.(lower(varargin{ii})) = varargin{ii+1};
+    else
+        warning('%s is not a variable of fkmodel.', varargin{ii})
+    end
 end
 end
