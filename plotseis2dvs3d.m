@@ -28,7 +28,7 @@ function [tshift1, tshift2, cc1, cc2, ss1, ss2] = plotseis2dvs3d(ddir2d, ddir3d,
 % SEE ALSO:
 % PLOTLOCAMP, CCSCALE
 %
-% Last modified by sirawich-at-princeton.edu, 05/02/2025
+% Last modified by sirawich-at-princeton.edu, 05/09/2025
 
 defval('useflag', 'hydrophone')
 defval('plt', true)
@@ -644,24 +644,4 @@ figure(fig3)
 savename = strcat(mfilename, '_', removepath(ddir3d), '_', 'FLATvs3D', '_', useflag);
 savename = replace(savename, '.', 'p');
 figdisp(savename, [], [], 2, [], 'epstopdf')
-end
-
-function [Ypk,Xpk,Wpk,Ppk] = findpeakstopbottom(Yin,varargin)
-% top peaks
-[Ypk_top,Xpk_top,Wpk_top,Ppk_top] = findpeaks(Yin,varargin{:});
-
-% bottom peaks
-[Ypk_bot,Xpk_bot,Wpk_bot,Ppk_bot] = findpeaks(-Yin,varargin{:});
-
-% merge
-Ypk = [Ypk_top; -Ypk_bot];
-Xpk = [Xpk_top; Xpk_bot];
-Wpk = [Wpk_top; Wpk_bot];
-Ppk = [Ppk_top; -Ppk_bot];
-
-% sort by X-value
-[Xpk, iXpk] = sort(Xpk);
-Ypk = Ypk(iXpk);
-Wpk = Wpk(iXpk);
-Ppk = Ppk(iXpk);
 end
