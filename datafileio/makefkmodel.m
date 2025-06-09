@@ -20,7 +20,7 @@ function fkmodel = makefkmodel(model, varargin)
 % SEE ALSO:
 % LOADFKMODEL, WRITEFKMODEL
 %
-% Last modified by sirawich-at-princeton.edu, 05/09/2025
+% Last modified by sirawich-at-princeton.edu, 05/29/2025
 
 defval('model', 'PS2024')
 
@@ -31,7 +31,13 @@ if isstring(model) || ischar(model)
             rho  = [1020  2500];
             vp   = [1500  3400];
             vs   = [   0  1963];
-            ztop = [   0 -5000];
+            ztop = [   0 -4400];
+        case 'oc'
+            fkmodel.nlayers = 2;
+            rho  = [1020  2850];
+            vp   = [1500  6500];
+            vs   = [   0  3700];
+            ztop = [   0 -4400];
         case 'ocm'
             fkmodel.nlayers = 3;
             rho  = [1020  2850   3330];
