@@ -1,9 +1,19 @@
-function stockdir = makestockfiles3d
-% MAKESTOCKFILES3D
+function stockdir = makestockfiles3d(runmode)
+% MAKESTOCKFILES3D(runmode)
 %
 % Create stock input files for SPECFEM3D runs.
 %
-% Last modified by sirawich-at-princeton.edu, 05/19/2025
+% INPUT:
+% runmode           see options
+%       'default'   generate stock input files for the first ime
+%       'notopo'    do not generate random field topography files
+%       [s2 nu rho it]     generate random field topography files given a 
+%                          variance, smoothness, correlation length, and
+%                          the number of iterations
+%
+% Last modified by sirawich-at-princeton.edu, 06/09/2025
+
+defval('runmode', 'default')
 
 %% create stockfiles folder
 stockdir = fullfile(getenv('REMOTE3D'), 'stockfiles');
@@ -29,6 +39,9 @@ system(sprintf('mkdir -p %s', meshdir));
 
 interfdir = fullfile(stockdir, 'interfacefiles');
 system(sprintf('mkdir -p %s', interfdir));
+
+topodir = fullfile(stockdir, 'topofiles');
+system(sprintf('mkdir -p %s', topodir));
 
 %% source-time function(s)
 t_stf = (-100:0.01:100)';
@@ -61,7 +74,21 @@ for ii = 1:length(freq)
             'origin_wavefront', [0 -10000 -10000], ...
             'origin_time', 0);
         
-        fname = sprintf('FKMODEL_2024_THETA-%02d_FREQ-%s', theta(jj), ...
+        fname = sprintf('FKMODEL_PS2024_THETA-%02d_FREQ-%s', theta(jj), ...
+            float2filestr(freq(ii)));
+        writefkmodel(fkmodel, fullfile(fkdir, fname));
+        
+        % Ocean + Crust
+        fkmodel = makefkmodel('OC', ...
+            'twindow', 100, ...
+            'stf_type', 4, ...
+            'stf_file', 'stf_file.txt', ...
+            'fmax', freq(ii), ...
+            'theta', theta(jj), ...
+            'origin_wavefront', [0 -10000 -20000], ...
+            'origin_time', 0);
+        
+        fname = sprintf('FKMODEL_OC_THETA-%02d_FREQ-%s', theta(jj), ...
             float2filestr(freq(ii)));
         writefkmodel(fkmodel, fullfile(fkdir, fname));
         
@@ -123,7 +150,7 @@ end
 %% STATION FILES
 stations = struct('name', {{'OBS01', 'P0009'}}, ...
     'network', {{'AA', 'MH'}}, 'lat', [0 0], ...
-    'lon', [0 0], 'elev', [-1500 -1500], 'z', [-1500 -4400]);
+    'lon', [0 0], 'elev', [-1500 -1500], 'z', [-4400 -1500]);
 writestations3d(stations, fullfile(stadir, 'STATIONS'));
 
 %% CMTSOLUTION FILES
@@ -143,7 +170,7 @@ size_elem = [500 500 500; 250 250 250; 100 100 100];
 NPROCS = [2 4; 4 4; 4 8];
 
 % model name
-model_name = {'PS2024', 'OCM', 'OSCM', 'Crust1'};
+model_name = {'PS2024', 'OC', 'OCM', 'OSCM', 'Crust1'};
 
 for ii = 1:size(size_box, 1)
     for jj = 1:size(size_elem, 1)
@@ -154,7 +181,7 @@ for ii = 1:size(size_box, 1)
                     continue
                 end
                 % skip model with sedimentary layer and elem size >= 500 m
-                if jj == 1 && ll >= 3
+                if jj == 1 && ll >= 4
                     continue
                 end
                 % materials: must consistent with layers in fkmodel
@@ -257,26 +284,112 @@ for kk = 1:length(model_name)
             fname = sprintf('interfaces_SIZE-%s_ELEM-%d_MODEL-%s.dat', ...
                 size_box_name{ii}, size_elem(jj, 1), model_name{kk});
             writeinterfacefiles3d(itfs, layers, fullfile(subdir, fname));
+            
+            % reset the interfaces struct
+            clear itfs
         end
     end
 end
 
+
+
+% NOTE: I separate the topography files (files with a bunch of elevations)
+% from interface files to reduce the number of files and storage needed.
+% For random field bathymetry or custom bathymetry, you need to combine an
+% interface file and topography files together.
+% create a directory for the inferface files and "topo" file
+subdir = fullfile(interfdir, 'RANDOM');
+system(sprintf('mkdir -p %s', subdir));
+
+% ii,jj,kk loop over model, box size, and element size
+for kk = 1:length(model_name)
+    fkmodel = makefkmodel(model_name{kk});
+    for ii = 1:size(size_box, 1)
+        for jj = 1:size(size_elem, 1)
+            try
+                fname_in = sprintf(['Mesh_par_file_SIZE-%s_ELEM-%d_NPROCS' ...
+                    '_X-%d_NPROCS_Y-%d_MODEL-%s'], size_box_name{ii}, ...
+                    size_elem(jj, 1), 2, 4, model_name{kk});
+                meshparams3d = loadmeshparfile3d(fullfile(meshdir, fname_in));
+            catch
+                continue
+            end
+            layers = zeros(meshparams3d.NREGIONS, 1);
+
+            % assumes flat interfaces except the ocean bottom
+            for mm = fkmodel.nlayers:-1:1
+                ii_itfs = fkmodel.nlayers - mm + 1;
+                if ii_itfs ~= fkmodel.nlayers - 1
+                    itfs{ii_itfs} = struct(...
+                        'SUPPRESS_UTM_PROJECTION'   , true  , ...
+                        'NXI'                       , 2   , ...
+                        'NETA'                      , 2  , ...
+                        'LON_MIN'   , meshparams3d.LONGITUDE_MIN, ...
+                        'LAT_MIN'   , meshparams3d.LATITUDE_MIN, ...
+                        'SPACING_XI', meshparams3d.LONGITUDE_MAX - meshparams3d.LONGITUDE_MIN, ...
+                        'SPACING_ETA', meshparams3d.LATITUDE_MAX - meshparams3d.LATITUDE_MIN, ...
+                        'FILE', fullfile(subdir, ...
+                            sprintf(['interf_SIZE-%s_ELEM-%d_MODEL' ...
+                            '-%s_%02d.dat'], size_box_name{ii}, ...
+                            size_elem(jj, 1), model_name{kk}, ii_itfs)), ...
+                        'Z', ones(2,2) * fkmodel.layers{mm}.ztop ...
+                        );
+                else
+                    NXI = meshparams3d.NEX_XI + 1;
+                    NETA = meshparams3d.NEX_ETA + 1;
+                    itfs{ii_itfs} = struct(...
+                        'SUPPRESS_UTM_PROJECTION'   , true  , ...
+                        'NXI'                       , NXI   , ...
+                        'NETA'                      , NETA  , ...
+                        'LON_MIN'   , meshparams3d.LONGITUDE_MIN, ...
+                        'LAT_MIN'   , meshparams3d.LATITUDE_MIN, ...
+                        'SPACING_XI'                , size_elem(jj, 1), ...
+                        'SPACING_ETA'               , size_elem(jj, 2), ...
+                        'FILE', fullfile(subdir, ...
+                            sprintf(['interf_SIZE-%s_ELEM-%d_MODEL' ...
+                            '-%s_%02d.dat'], size_box_name{ii}, ...
+                            size_elem(jj, 1), model_name{kk}, ii_itfs)), ...
+                        'Z', ones(NXI,NETA) * fkmodel.layers{mm}.ztop ...
+                        );
+                end
+                layers(ii_itfs) = meshparams3d.REGIONS{mm}.NZ_END - ...
+                    meshparams3d.REGIONS{mm}.NZ_BEGIN + 1;
+                    
+            end
+            
+            % write the interface file and its dependents
+            fname = sprintf('interfaces_SIZE-%s_ELEM-%d_MODEL-%s.dat', ...
+                size_box_name{ii}, size_elem(jj, 1), model_name{kk});
+            writeinterfacefiles3d(itfs, layers, fullfile(subdir, fname));
+
+            % reset the interfaces struct
+            clear itfs
+        end
+    end
+end
+
+%% TOPOGRAPHY
 % random topography
-s2 = [100 1000 10000 100000];
-nu = [0.5 1.0 1.5];
-rho = [1000 2000 4000 8000];
+if strcmp(runmode, 'default')
+    s2 = [100 1000 10000 100000];
+    nu = [0.5 1.0 1.5];
+    rho = [1000 2000 4000 8000];
+    it = 1:100;
+elseif strcmp(runmode, 'notopo')
+    return
+elseif isnumeric(runmode) && length(runmode) == 4
+    s2 = runmode(1);
+    nu = runmode(2);
+    rho = runmode(3);
+    it = 1:runmode(4);
+end
 
 % xx,yy,zz loops over random field's parameters
 for xx = 1:length(s2)
     for yy = 1:length(nu)
         for zz = 1:length(rho)
             % nn loops over iteration
-            for nn = 1:100
-                % create a directory for the inferface files and "topo" file
-                dirname = sprintf('RANDOM_S2-%d_NU-%.1f_RHO-%d_IT%03d', ...
-                    s2(xx), nu(yy), rho(zz), nn);
-                system(sprintf('mkdir -p %s', fullfile(interfdir, dirname)));
-
+            for nn = it
                 % Generate random field for the ocean bottom
                 % Note that I make the grid of the field much larger than what 
                 % I use, so that I can have larger rho
@@ -292,6 +405,18 @@ for xx = 1:length(s2)
                 % ii,jj,kk loop over model, box size, and element size
                 for ii = 1:size(size_box, 1)
                     for jj = 1:size(size_elem, 1)
+                        try
+                            fname_in = sprintf(['Mesh_par_file_SIZE-%s_ELEM-%d_NPROCS' ...
+                                '_X-%d_NPROCS_Y-%d_MODEL-%s'], size_box_name{ii}, ...
+                                size_elem(jj, 1), 2, 4, 'PS2024');
+                            meshparams3d = loadmeshparfile3d(fullfile(meshdir, fname_in));
+                        catch
+                            fname_in = sprintf(['Mesh_par_file_SIZE-%s_ELEM-%d_NPROCS' ...
+                                '_X-%d_NPROCS_Y-%d_MODEL-%s'], size_box_name{ii}, ...
+                                size_elem(jj, 1), 2, 4, 'OCM');
+                            meshparams3d = loadmeshparfile3d(fullfile(meshdir, fname_in));
+                        end
+            
                         % apply the random field to the ocean bottom
                         % downsampling the random field
                         index_used = size_box(ii, 1) / MIN_SIZE_ELEM / 2;
@@ -301,98 +426,59 @@ for xx = 1:length(s2)
                             (-index_used:downsampling_factor:index_used)...
                             + index_center;
                         bath = Hxy(index_used, index_used);
-
-                        for kk = 1:length(model_name)
-                            fkmodel = makefkmodel(model_name{kk});
-                            try
-                                fname_in = sprintf(['Mesh_par_file_SIZE-%s_ELEM-%d_NPROCS' ...
-                                    '_X-%d_NPROCS_Y-%d_MODEL-%s'], size_box_name{ii}, ...
-                                    size_elem(jj, 1), 2, 4, model_name{kk});
-                                meshparams3d = loadmeshparfile3d(fullfile(meshdir, fname_in));
-                            catch
-                                continue
-                            end
-                            layers = zeros(meshparams3d.NREGIONS, 1);
-                            % assumes flat interfaces except the ocean bottom
-                            for mm = fkmodel.nlayers:-1:1
-                                ii_itfs = fkmodel.nlayers - mm + 1;
-                                itfs{ii_itfs} = struct(...
-                                    'SUPPRESS_UTM_PROJECTION'   , true  , ...
-                                    'NXI'                       , 2   , ...
-                                    'NETA'                      , 2  , ...
-                                    'LON_MIN'   , meshparams3d.LONGITUDE_MIN, ...
-                                    'LAT_MIN'   , meshparams3d.LATITUDE_MIN, ...
-                                    'SPACING_XI', meshparams3d.LONGITUDE_MAX - meshparams3d.LONGITUDE_MIN, ...
-                                    'SPACING_ETA', meshparams3d.LATITUDE_MAX - meshparams3d.LATITUDE_MIN, ...
-                                    'FILE', fullfile(subdir, ...
-                                        sprintf(['interf_SIZE-%s_ELEM-%d_MODEL' ...
-                                        '-%s_%02d.dat'], size_box_name{ii}, ...
-                                        size_elem(jj, 1), model_name{kk}, ii_itfs)), ...
-                                    'Z', ones(2,2) * fkmodel.layers{mm}.ztop ...
-                                    );
-                                layers(ii_itfs) = meshparams3d.REGIONS{mm}.NZ_END - ...
-                                    meshparams3d.REGIONS{mm}.NZ_BEGIN + 1;
-                            end
-
-                            % apply Hann Filter
-                            NXI = meshparams3d.NEX_XI + 1;
-                            NETA = meshparams3d.NEX_ETA + 1;
-
-                            wY = shanning(NETA, 0.15);
-                            wX = shanning(NXI, 0.15);
-                            bath_taper = (wY * wX') .* bath;
                             
-                            % apply random field to ocean bottom
-                            itfs{fkmodel.nlayers - 1}.NXI = NXI;
-                            itfs{fkmodel.nlayers - 1}.NETA = NETA;
-                            itfs{fkmodel.nlayers - 1}.SPACING_XI = size_elem(jj, 1);
-                            itfs{fkmodel.nlayers - 1}.SPACING_ETA = size_elem(jj, 2);
-                            itfs{fkmodel.nlayers - 1}.Z = bath_taper + ...
-                                fkmodel.layers{2}.ztop;
 
-                            % write the interface file and its dependents
-                            fname = sprintf('interfaces_SIZE-%s_ELEM-%d_MODEL-%s.dat', ...
-                                size_box_name{ii}, size_elem(jj, 1), model_name{kk});
-                            writeinterfacefiles3d(itfs, layers, fullfile(subdir, fname));
-                            
-                            % draw the bathymetry for reference
-                            if kk == 2
-                                figure(1)
-                                clf
-                                set(gcf, 'Units', 'inches', ...
-                                    'Position', [0 1 7 6])
-                                imagesc([-10000 10000], [-10000 10000], ...
-                                    bath_taper);
-                                colormap(kelicol);
-                                cb = colorbar( 'TickDirection', 'out', ...
-                                    'FontSize', 12, 'Ticks', ...
-                                    (-4:4) * round(sqrt(s2(xx)), 1, ...
-                                    'significant'));
-                                cb.Label.String = 'elevation (m)';
-                                grid on
-                                titlestring = sprintf(['\\sigma^2 = %d' ...
-                                    ' | \\nu = %.1f | \\rho = %d | ' ...
-                                    '\\Deltax = %d'], s2(xx), nu(yy), ...
-                                    rho(zz), size_elem(jj, 1));
-                                title(titlestring)
-                                xlabel('easting (m)')
-                                ylabel('northing (m)')
-                                set(gca, 'TickDir', 'out', ...
-                                    'DataAspectRatio', [1 1 1], ...
-                                    'XTick', (-10:2:10) * 1e3, ...
-                                    'YTick', (-10:2:10) * 1e3, ...
-                                    'CLim', [-4 4] * round(sqrt(s2(xx)) ...
-                                    , 1, 'significant'), ...
-                                    'FontSize', 12)
-                                set(gcf, 'Renderer', 'painters')
-                                
-                                figname = sprintf(['%s_RANDOM_S2-%d_' ...
-                                    'NU-%.1f_RHO-%d_ELEM-%d_IT-%03d'], ...
-                                    mfilename, s2(xx), nu(yy), rho(zz), ...
-                                    size_elem(jj, 1), nn);
-                                figname = replace(figname, '.', 'p');
-                                figdisp(figname, [], [], 2, [], 'epstopdf');
-                            end
+                        % apply Hann Filter
+                        NXI = meshparams3d.NEX_XI + 1;
+                        NETA = meshparams3d.NEX_ETA + 1;
+
+                        % write the interface file and its dependents
+                        fname = sprintf(['topo_RANDOM_S2-%d_' ...
+                            'NU-%.2f_RHO-%d_SIZE-%d_ELEM-%d_IT-%03d.dat'], ...
+                            s2(xx), nu(yy), rho(zz), ...
+                            size_box(ii, 1), size_elem(jj, 1), nn);
+                        fid = fopen(fullfile(topodir, fname), 'w');
+                        fprintf(fid, '%g\n', reshape(bath', ...
+                            NXI * NETA, 1));
+                        fclose(fid);
+
+                        % draw the bathymetry for reference
+                        if ii > 1
+                            figure(1)
+                            clf
+                            set(gcf, 'Units', 'inches', ...
+                                'Position', [0 1 7 6])
+                            imagesc([-10000 10000], [-10000 10000], ...
+                                bath);
+                            colormap(kelicol);
+                            cb = colorbar( 'TickDirection', 'out', ...
+                                'FontSize', 12, 'Ticks', ...
+                                (-4:4) * round(sqrt(s2(xx)), 1, ...
+                                'significant'));
+                            cb.Label.String = 'elevation (m)';
+                            grid on
+                            titlestring = sprintf(['\\sigma^2 = %d' ...
+                                ' | \\nu = %.2f | \\rho = %d | ' ...
+                                '\\Deltax = %d'], s2(xx), nu(yy), ...
+                                rho(zz), size_elem(jj, 1));
+                            title(titlestring)
+                            xlabel('easting (m)')
+                            ylabel('northing (m)')
+                            set(gca, 'TickDir', 'out', ...
+                                'DataAspectRatio', [1 1 1], ...
+                                'XTick', (-10:2:10) * 1e3, ...
+                                'YTick', (-10:2:10) * 1e3, ...
+                                'CLim', [-4 4] * round(sqrt(s2(xx)) ...
+                                , 1, 'significant'), ...
+                                'FontSize', 12)
+                            set(gcf, 'Renderer', 'painters')
+
+                            figname = sprintf(['%s_RANDOM_S2-%d_' ...
+                                'NU-%.2f_RHO-%d_ELEM-%d_IT-%03d'], ...
+                                mfilename, s2(xx), nu(yy), rho(zz), ...
+                                size_elem(jj, 1), nn);
+                            figname = replace(figname, '.', 'p');
+                            figdisp(figname, [], [], 2, [], 'epstopdf');
                         end
                     end
                 end
@@ -400,4 +486,163 @@ for xx = 1:length(s2)
         end
     end
 end
+
+%% COMMENTED OUT
+% for xx = 1:length(s2)
+%     for yy = 1:length(nu)
+%         for zz = 1:length(rho)
+%             % nn loops over iteration
+%             for nn = 1:100
+%                 % create a directory for the inferface files and "topo" file
+%                 dirname = sprintf('RANDOM_S2-%d_NU-%.2f_RHO-%d_IT-%03d', ...
+%                     s2(xx), nu(yy), rho(zz), nn);
+%                 subdir = fullfile(interfdir, dirname);
+%                 system(sprintf('mkdir -p %s', subdir));
+% 
+%                 % Generate random field for the ocean bottom
+%                 % Note that I make the grid of the field much larger than what 
+%                 % I use, so that I can have larger rho
+%                 MIN_SIZE_ELEM = 50;
+%                 NEX_MAX = max(size_box(:,1)) / MIN_SIZE_ELEM;
+%                 p.dydx = MIN_SIZE_ELEM * [1 1];
+%                 p.NyNx = (1.125 * (rho(zz) / 1000) * NEX_MAX + 1) * [1 1];
+%                 p.blurs = Inf;
+%                 p.taper = 1;
+%                 Hx = simulosl([s2(xx) nu(yy) rho(zz)], p);
+%                 Hxy = v2s(Hx, p);
+% 
+%                 % ii,jj,kk loop over model, box size, and element size
+%                 for ii = 1:size(size_box, 1)
+%                     for jj = 1:size(size_elem, 1)
+%                         % apply the random field to the ocean bottom
+%                         % downsampling the random field
+%                         index_used = size_box(ii, 1) / MIN_SIZE_ELEM / 2;
+%                         downsampling_factor = size_elem(jj, 1) / MIN_SIZE_ELEM;
+%                         index_center = ceil(size(Hxy, 1) / 2);
+%                         index_used = ...
+%                             (-index_used:downsampling_factor:index_used)...
+%                             + index_center;
+%                         bath = Hxy(index_used, index_used);
+% 
+%                         for kk = 1:length(model_name)
+%                             fkmodel = makefkmodel(model_name{kk});
+%                             try
+%                                 fname_in = sprintf(['Mesh_par_file_SIZE-%s_ELEM-%d_NPROCS' ...
+%                                     '_X-%d_NPROCS_Y-%d_MODEL-%s'], size_box_name{ii}, ...
+%                                     size_elem(jj, 1), 2, 4, model_name{kk});
+%                                 meshparams3d = loadmeshparfile3d(fullfile(meshdir, fname_in));
+%                             catch
+%                                 continue
+%                             end
+%                             layers = zeros(meshparams3d.NREGIONS, 1);
+%                             
+%                             % assumes flat interfaces except the ocean bottom
+%                             for mm = fkmodel.nlayers:-1:1
+%                                 ii_itfs = fkmodel.nlayers - mm + 1;
+%                                 itfs{ii_itfs} = struct(...
+%                                     'SUPPRESS_UTM_PROJECTION'   , true  , ...
+%                                     'NXI'                       , 2   , ...
+%                                     'NETA'                      , 2  , ...
+%                                     'LON_MIN'   , meshparams3d.LONGITUDE_MIN, ...
+%                                     'LAT_MIN'   , meshparams3d.LATITUDE_MIN, ...
+%                                     'SPACING_XI', meshparams3d.LONGITUDE_MAX - meshparams3d.LONGITUDE_MIN, ...
+%                                     'SPACING_ETA', meshparams3d.LATITUDE_MAX - meshparams3d.LATITUDE_MIN, ...
+%                                     'FILE', fullfile(subdir, ...
+%                                         sprintf(['interf_SIZE-%s_ELEM-%d_MODEL' ...
+%                                         '-%s_%02d.dat'], size_box_name{ii}, ...
+%                                         size_elem(jj, 1), model_name{kk}, ii_itfs)), ...
+%                                     'Z', ones(2,2) * fkmodel.layers{mm}.ztop ...
+%                                     );
+%                                 layers(ii_itfs) = meshparams3d.REGIONS{mm}.NZ_END - ...
+%                                     meshparams3d.REGIONS{mm}.NZ_BEGIN + 1;
+%                             end
+% 
+%                             % apply Hann Filter
+%                             NXI = meshparams3d.NEX_XI + 1;
+%                             NETA = meshparams3d.NEX_ETA + 1;
+% 
+%                             wY = shanning(NETA, 0.15);
+%                             wX = shanning(NXI, 0.15);
+%                             bath_taper = (wY * wX') .* bath;
+%                             
+%                             % apply random field to ocean bottom
+%                             itfs{fkmodel.nlayers - 1}.NXI = NXI;
+%                             itfs{fkmodel.nlayers - 1}.NETA = NETA;
+%                             itfs{fkmodel.nlayers - 1}.SPACING_XI = size_elem(jj, 1);
+%                             itfs{fkmodel.nlayers - 1}.SPACING_ETA = size_elem(jj, 2);
+%                             itfs{fkmodel.nlayers - 1}.Z = bath_taper + ...
+%                                 fkmodel.layers{2}.ztop;
+%                             
+%                             % lower the interfaces underneath to prevent
+%                             % interface intersection or the layer too thin
+%                             for mm = (fkmodel.nlayers - 2):-1:1
+%                                 mm_fkmodel_top = fkmodel.nlayers - mm;
+%                                 mm_fkmodel_bottom = fkmodel.nlayers - mm + 1;
+%                                 layer_thickness = fkmodel.layers{mm_fkmodel_top}.ztop - ...
+%                                     fkmodel.layers{mm_fkmodel_bottom}.ztop;
+%                                 min_layer_thickness = 0.6 * layer_thickness;
+%                                 if min(itfs{mm+1}.Z, [], 'all') - itfs{mm}.Z(1,1) <= min_layer_thickness
+%                                     itfs{mm}.NXI = NXI;
+%                                     itfs{mm}.NETA = NETA;
+%                                     itfs{mm}.SPACING_XI = size_elem(jj, 1);
+%                                     itfs{mm}.SPACING_ETA = size_elem(jj, 2);
+%                                     itfs{mm}.Z = min(itfs{mm+1}.Z - ...
+%                                         min_layer_thickness, ...
+%                                         itfs{mm}.Z(1,1));
+%                                 end
+%                             end
+% 
+%                             % write the interface file and its dependents
+%                             fname = sprintf('interfaces_SIZE-%s_ELEM-%d_MODEL-%s.dat', ...
+%                                 size_box_name{ii}, size_elem(jj, 1), model_name{kk});
+%                             writeinterfacefiles3d(itfs, layers, fullfile(subdir, fname));
+%                             
+%                             % reset the interfaces struct
+%                             clear itfs
+%                             
+%                             % draw the bathymetry for reference
+%                             if kk == 2
+%                                 figure(1)
+%                                 clf
+%                                 set(gcf, 'Units', 'inches', ...
+%                                     'Position', [0 1 7 6])
+%                                 imagesc([-10000 10000], [-10000 10000], ...
+%                                     bath_taper);
+%                                 colormap(kelicol);
+%                                 cb = colorbar( 'TickDirection', 'out', ...
+%                                     'FontSize', 12, 'Ticks', ...
+%                                     (-4:4) * round(sqrt(s2(xx)), 1, ...
+%                                     'significant'));
+%                                 cb.Label.String = 'elevation (m)';
+%                                 grid on
+%                                 titlestring = sprintf(['\\sigma^2 = %d' ...
+%                                     ' | \\nu = %.1f | \\rho = %d | ' ...
+%                                     '\\Deltax = %d'], s2(xx), nu(yy), ...
+%                                     rho(zz), size_elem(jj, 1));
+%                                 title(titlestring)
+%                                 xlabel('easting (m)')
+%                                 ylabel('northing (m)')
+%                                 set(gca, 'TickDir', 'out', ...
+%                                     'DataAspectRatio', [1 1 1], ...
+%                                     'XTick', (-10:2:10) * 1e3, ...
+%                                     'YTick', (-10:2:10) * 1e3, ...
+%                                     'CLim', [-4 4] * round(sqrt(s2(xx)) ...
+%                                     , 1, 'significant'), ...
+%                                     'FontSize', 12)
+%                                 set(gcf, 'Renderer', 'painters')
+%                                 
+%                                 figname = sprintf(['%s_RANDOM_S2-%d_' ...
+%                                     'NU-%.2f_RHO-%d_ELEM-%d_IT-%03d'], ...
+%                                     mfilename, s2(xx), nu(yy), rho(zz), ...
+%                                     size_elem(jj, 1), nn);
+%                                 figname = replace(figname, '.', 'p');
+%                                 figdisp(figname, [], [], 2, [], 'epstopdf');
+%                             end
+%                         end
+%                     end
+%                 end
+%             end
+%         end
+%     end
+% end
 end
