@@ -10,7 +10,10 @@ function writesurfacefile3d(fname, elev)
 %
 % SEE ALSO:
 % LOADSURFACEFILE3D, WRITEINTERFACEFILE3D
-fid = fopen(fname);
+%
+% Last modified by sirawich-at-princeton.edu, 06/12/2025
+
+fid = fopen(fname, 'w');
 if size(elev, 2) > 1
     elev = reshape(elev', numel(elev), 1);
 end
