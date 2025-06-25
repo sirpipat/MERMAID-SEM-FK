@@ -1,5 +1,5 @@
-function [A, B, C, ZZ] = detrend2d(zz, xx, yy)
-% [A, B, C, ZZ] = detrend2d(zz, xx, yy)
+function [ZZ, A, B, C, xx, yy] = detrend2d(zz, xx, yy)
+% [ZZ, A, B, C, XX, YY] = detrend2d(zz, xx, yy)
 %
 % Detrends the surface zz given a mesh [xx, yy]. It first use least-squared
 % method to fits the plane equation zz = A + B * xx + C * yy. Then it 
@@ -13,22 +13,23 @@ function [A, B, C, ZZ] = detrend2d(zz, xx, yy)
 % yy            meshgrid for y-value [Default: (1:size(zz,1))']
 %
 % OUTPUTS:
-% A, B, C       best-fitted parameters of a plane z = A + Bx + Cy
 % ZZ            residue once linear trend is removed
+% A, B, C       best-fitted parameters of a plane z = A + Bx + Cy
+% XX, YY        meshgrid values for x and y
 %
-% Example
+% % Example
 % x = (-1000:25:1000)';
 % y = (-2000:25:2000)';
 % [xx, yy] = meshgrid(x, y);
 % zz = 1200 + 0.4 * xx - 0.25 * yy + 50 * randn(size(xx));
 % 
 % % Quick detrend
-% [~, ~, ~, zz2] = detrend2d(zz);
+% zz2 = detrend2d(zz);
 %
 % % Estimate slope
-% [A, B, C] = detrend2d(zz, xx, yy);
+% [ZZ, A, B, C, XX, YY] = detrend2d(zz, xx, yy);
 %
-% Last modified by sirawich-at-princeton.edu, 06/12/2025
+% Last modified by sirawich-at-princeton.edu, 06/25/2025
 
 defval('xx', (1:size(zz,2))')
 defval('yy', (1:size(zz,1))')
