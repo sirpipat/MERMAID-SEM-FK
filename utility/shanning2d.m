@@ -1,5 +1,5 @@
 function w = shanning2d(n, r, shape, sac)
-% [w, wl, wr] = SHANNING2D([nx ny], r, sac)
+% w = SHANNING2D([nx ny], r, shape, sac)
 %
 % Calculates 2D Hanning windows of a certain length and a certain width
 % fraction the exact way SAC says it is doing it...
@@ -21,7 +21,7 @@ function w = shanning2d(n, r, shape, sac)
 % SEE ALSO:
 % SHANNING
 %
-% Last modified by sirawich-at-princeton.edu, 06/04/2025
+% Last modified by sirawich-at-princeton.edu, 06/25/2025
 
 defval('r',0.5)
 defval('shape', 0)
