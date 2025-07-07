@@ -16,7 +16,7 @@ function params = loadparfile3d(fname)
 % SEE ALSO:
 % WRITEPARFILE, MAKEPARAMS
 %
-% Last modified by Sirawich Pipatprathanporn, 09/13/2024
+% Last modified by Sirawich Pipatprathanporn, 06/28/2025
 
 names  = {};
 values = {};
@@ -181,10 +181,12 @@ where_start = strfind(line, '=');
 where_end = strfind(line, '#');
 if isempty(where_end)
     where_end = length(line) + 1;
+else
+    where_end = where_end(1);
 end
 
 % read the value
-value = strip(sscanf(line((where_start+1):(where_end-1)), '%c'));
+value = strip(sscanf(line((where_start(1)+1):(where_end-1)), '%c'));
 end
 
 function value = readbool(line)
@@ -204,7 +206,7 @@ function value = readint(line)
 % find equal sign
 where = strfind(line, '=');
 % read the value
-value = sscanf(line((where+1):end), '%d', 1);
+value = sscanf(line((where(1)+1):end), '%d', 1);
 end
 
 function value =  readfloat(line)
@@ -213,5 +215,5 @@ where = strfind(line, '=');
 % change the exponent notation syntax from 'd' to 'e'
 line = replace(line, 'd', 'e');
 % read the value
-value = sscanf(line((where+1):end), '%f', 1);
+value = sscanf(line((where(1)+1):end), '%f', 1);
 end
