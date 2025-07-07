@@ -3,7 +3,7 @@ function pp2026_figure2(obs_struct, obsmasterdir, synmasterdir, presmasterdir)
 %
 % Makes figure 2A and 2B for Pipatprathanporn+2026 paper.
 %
-% Last modified by sirawich-at-princeton.edu, 07/02/2025
+% Last modified by sirawich-at-princeton.edu, 07/06/2025
 
 keywords = {'ascend', 'descend'};
 keyfolders = {'LOWCC', 'HIGHCC'};
@@ -128,6 +128,15 @@ for kk = 1:2
         hold on
         set(gca, 'FontSize', 9, 'TickDir', 'out')
 
+        % read Instaseis z-displacement at the ocean bottom
+        synfile = cindeks(ls2cell(sprintf('%s%d/*_%s_*.sac', synmasterdir, eventid, stationid), 1), 1);
+        [seis_s, hdr_s, ~, ~, tims_s] = readsac(synfile);
+        [~, ~, ~, fs_s] = gethdrinfo(hdr_s);
+
+         % apply bandpass filter
+        seis_sf = bandpass(detrend(seis_s), fs_s, fc(1), fc(2), 4, ...
+            2, 'butter', 'linear');
+
         ddir = fullfile(getenv('REMOTE3D'), '20250629_MERMAID_INSTASEIS', ...
             sprintf('LAYERED_OC_MERMAID_%s_%02d', keyfolders{kk}, ...
             ii_cases(ii)));
@@ -146,13 +155,13 @@ for kk = 1:2
             'ph', 'p,P,PKP,PKIKP', ...
             'deg', obs_struct.metadata.GCARC(ic(ii_cases(ii))), ...
             'stdp', -z(1)/1000), 1).time;
-        tSPECFEM = t - t0 + (hdr_o.USER8 - hdr_o.T0) + tTauP;
+        tSPECFEM = t - t0 + (hdr_o.USER8 - hdr_o.T0) - (hdr_s.USER8 - hdr_s.T0); % + tTauP;
         fs_SPECFEM = (length(t) - 1) / (t(end) - t(1));
 
         % interpolate the seismogram to align samples with the observed
         % seismogram
         x = lowpass(detrend(x) .* shanning(length(x), 0.2), fs_SPECFEM, 10, 2, 2, 'butter', 'linear');
-        x = shannon(tSPECFEM, x, t_relative(wh));
+        x = shannon(tSPECFEM, x, t_relative);
 
         % apply bandpass filter
         xf = bandpass(detrend(x) .* shanning(length(x), 0.2), fs_o, fc(1), fc(2), 4, 2, ...
@@ -170,15 +179,6 @@ for kk = 1:2
         xbf = bandpass(detrend(xb) .* shanning(length(xb), 0.2), fs_SPECFEM / floor(fs_SPECFEM/20), ...
             fc(1), fc(2), 4, 2, 'butter', 'linear');
 
-        % read Instaseis z-displacement at the ocean bottom
-        synfile = cindeks(ls2cell(sprintf('%s%d/*_%s_*.sac', synmasterdir, eventid, stationid), 1), 1);
-        [seis_s, hdr_s, ~, ~, tims_s] = readsac(synfile);
-        [~, ~, ~, fs_s] = gethdrinfo(hdr_s);
-        
-        % apply bandpass filter
-        seis_sf = bandpass(detrend(seis_s), fs_s, fc(1), fc(2), 4, ...
-            2, 'butter', 'linear');
-        
         % amplitude scaling for SPECFEM seismogram
         amp_xbf = max(abs(xbf(and(tb >= t0-2, tb <= t0+2))));
         amp_seis_sf = max(abs(seis_sf(and(tims_s >= hdr_s.T0 - 10, ...
@@ -188,13 +188,16 @@ for kk = 1:2
         xf = xf * amp_seis_sf / amp_xbf;
 
         % compute the cross-correlation of the envelope
-        seis_o3 = seis_o2(wh);
-        [t_shift1, CCmax1, lags1, cc1, s1] = ccscale(seis_o3, xf, datetime('today'), datetime('today'), fs_o, seconds(10), 'hard', true);
-        [t_shift2, CCmax2, lags2, cc2, s2] = ccscale(seis_o3, xf, datetime('today'), datetime('today') + seconds(t_shift1), fs_o, seconds(5), 'soft', false);
+        wh3 = and(t_relative >= -5, t_relative <= 10);
+        seis_o3 = seis_o2(wh3);
+        t_relative_o3 = t_relative(wh3);
+        dt_now = datetime('now');
+        [t_shift1, CCmax1, lags1, cc1, Smax1, s1] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1)), fs_o, seconds(15), 'soft', true, false);
+        [t_shift2, CCmax2, lags2, cc2, Smax2, s2] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1) +t_shift1), fs_o, seconds(2), 'hard', false, false);
         t_shift3D = t_shift1 + t_shift2;
 
-        plot(t_relative(wh) + t_shift3D, xf / max(abs(xf)) - 2.5, 'LineWidth', 0.75, 'Color', [0 0.2 0.9])
-        title(sprintf('cc: %.2f | \\Delta\\tau: %.2f s | s: %.2g', CCmax2, t_shift3D, s2))
+        plot(t_relative + t_shift3D, xf / max(abs(xf)) - 2.5, 'LineWidth', 0.75, 'Color', [0 0.2 0.9])
+        title(sprintf('cc: %.2f | \\Delta\\tau: %.2f s | s: %.2g', CCmax2, t_shift3D, Smax2))
 
         xlabel('time since picked P-wave arrival (s)')
         legend('observed', ...
