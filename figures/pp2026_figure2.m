@@ -1,15 +1,49 @@
-function pp2026_figure2(obs_struct, obsmasterdir, synmasterdir, presmasterdir)
-% PP2026_FIGURE2(obs_struct, obsmasterdir, synmasterdir, presmasterdir)
+function pp2026_figure2(obs_struct, obsmasterdir, synmasterdir, presmasterdir, handpick)
+% PP2026_FIGURE2(obs_struct, obsmasterdir, synmasterdir, presmasterdir, handpick)
 %
 % Makes figure 2A and 2B for Pipatprathanporn+2026 paper.
 %
-% Last modified by sirawich-at-princeton.edu, 07/06/2025
+% INPUT:
+% obs_struct        a struct containing
+% - fcorners            [lower upper] corner frequencies
+% - CCmaxs              maximum correlation coefficients for
+%                       [flat bath] cases
+% - t_shifts            optimal time shifts for [flat bath] cases
+% - metadata            SAC Headers associated to the obsfile
+% obsmasterdir      the master directory to the observed files sorted into
+%                   IRIS event ID folders
+% synmasterdir      the master directory to the synthetic files sorted into
+%                   IRIS event ID folders
+% presmasterdir     the master directory for the synthetic pressure
+%                   seismograms will be created and sorted into IRIS eent
+%                   ID folders
+% handpick          whether to activate the handpick mode for optimal
+%                   timeshift. [Default: false]
+%     false -- picks the one that give the maximum correlation coefficient
+%     true  -- you are prompts to accept the automaic pick [Y/N]
+%              if you reject (N), you will be given options to choose from
+%              a few candidates. You may accept (Y), move to the next (N)
+%              or previous (P) to find a better fit. The seismograms will
+%              be time shifted to give you a visual guide. You may quit (Q)
+%              the plotting in case you have made a mistake and want to
+%              start over. You may activate the keyword statement (K) to
+%              debug.
+%
+% Last modified by sirawich-at-princeton.edu, 07/13/2025
+
+defval('handpick', false)
 
 keywords = {'ascend', 'descend'};
 keyfolders = {'LOWCC', 'HIGHCC'};
-ii_cases = 11:15;
+letterlabel = {'a', 'b', 'c', 'd', 'e'};
+
+ii_cases_low_cc = [1 2 9 10 14];
+ii_cases_high_cc = [1 2 8 11 14];
+ii_cases_master = [ii_cases_low_cc; ii_cases_high_cc];
+
 for kk = 1:2
     [~, ic] = sort(obs_struct.CCmaxs(:,2), keywords{kk});
+    ii_cases = ii_cases_master(kk,:);
     
     figure;
     set(gcf, 'Units', 'inches', 'Position', [0 1 12 7])
@@ -24,7 +58,7 @@ for kk = 1:2
             obs_struct.metadata.STLA(ic(ii_cases(ii)))], ...
             obs_struct.metadata.BAZ(ic(ii_cases(ii)))+180);
     
-        subplot('Position', [0.030+xposshift(ii) 0.65 0.16 0.25])
+        subplot('Position', [0.030+xposshift(ii) 0.65 0.16 0.2562])
         imagesc([-10 10], [-10 10], rot90(zz'));
         colormap(kelicol);
         clim(mean(zz(:) + std(zz(:)) * [-3 3]))
@@ -34,7 +68,7 @@ for kk = 1:2
         grid on;
         box on;
         hold on;
-        plot([-10 10], [0 0], 'LineWidth', 2, 'Color', 'k')
+        plot([-10 10], [0 0], 'LineWidth', 1, 'Color', 'k')
         axis image;
         axis xy;
         xticks(-10:5:10)
@@ -47,21 +81,50 @@ for kk = 1:2
             ylabel('transverse position (km)')
         end
         set(gca, 'TickDir', 'out', 'FontSize', 9, ...
-            'Position', [0.033+xposshift(ii) 0.68 0.16 0.25])
+            'Position', [0.033+xposshift(ii) 0.68 0.16 0.2562])
         title(sprintf('%d-%s', obs_struct.metadata.USER7(ic(ii_cases(ii))), ...
-            obs_struct.metadata.KSTNM{ic(ii_cases(ii))}))
+            obs_struct.metadata.KSTNM{ic(ii_cases(ii))}), ...
+            'FontWeight', 'normal')
+        subtitle(' ', 'FontSize', 2)
     
+        % add mean and std info the corners
+        ax1_mean = axes('Position', [0.038+xposshift(ii) 0.68 0.07 0.025]);
+        axeslabel(ax1_mean, 0.5, 0.5, sprintf('\\mu = %.3f km', ...
+            round(mean(zz(:)))/1000), 'FontSize', 8, ...
+            'HorizontalAlignment', 'center');
+        nolabels(ax1_mean, 3)
+        set(ax1_mean, 'Box', 'on', 'XTick', [], 'YTick', [])
+
+        ax1_std = axes('Position', [0.118+xposshift(ii) 0.68 0.07 0.025]);
+        axeslabel(ax1_std, 0.5, 0.5, sprintf('\\sigma = %.3f km', ...
+            round(std(zz(:)))/1000), 'FontSize', 8, ...
+            'HorizontalAlignment', 'center');
+        nolabels(ax1_std, 3)
+        set(ax1_std, 'Box', 'on', 'XTick', [], 'YTick', [])
+
+        % boxed label
+        ax1b = axes('Position', [0.005+xposshift(ii) 0.94 0.014*1.2 0.024*1.2]);
+        axeslabel(ax1b, 0.5, 0.5, letterlabel{ii}, 'FontSize', 10, ...
+            'HorizontalAlignment', 'center');
+        set(ax1b, 'Box', 'on', 'XTick', [], 'YTick', [])
+        nolabels(ax1b, 3)
+
         %% Middle row: bathymetry profile along great-circle path
         subplot('Position', [0.038+xposshift(ii) 0.48 0.15 0.18])
         hold on
         for jj = 1:size(zz,1)
             hold on
             if jj ~= 41
-                plot(ll(1,:)/1000, zz(jj,:)/1000, 'LineWidth', 0.25, 'Color', ...
-                    [0.7 0.7 0.7]);
+                % plot(ll(1,:)/1000, zz(jj,:)/1000, 'LineWidth', 0.25, ...
+                %     'Color', [0.7 0.7 0.7]);
+                plot(ll(1,:)/1000, zz(jj,:)/1000, 'LineWidth', 0.25, ...
+                    'Color', [0.95-0.4/80*(jj-1) 0.8 0.55+0.4/80*(jj-1)]);
+            else
+                plot(ll(1,:)/1000, zz(jj,:)/1000, 'LineWidth', 1, ...
+                    'Color', 'k');
             end
         end
-        plot(ll(1,:)/1000, zz(41,:)/1000, 'LineWidth', 1, 'Color', 'k');
+        %plot(ll(1,:)/1000, zz(41,:)/1000, 'LineWidth', 1, 'Color', 'k');
         grid on
         box on
         xticks(-10:5:10)
@@ -70,7 +133,7 @@ for kk = 1:2
         ylabel('elevation (km)')
         
         %% Bottom row: seismograms
-        subplot('Position', [0.038+xposshift(ii) 0.07 0.15 0.26])
+        ax3 = subplot('Position', [0.038+xposshift(ii) 0.07 0.15 0.26]);
     
         % identify observed pressure file
         eventid = obs_struct.metadata.USER7(ic(ii_cases(ii)));
@@ -99,6 +162,13 @@ for kk = 1:2
         % badpass filtering
         seis_o2 = bandpass(detrend(seis_o), fs_o, fc(1), fc(2), 4, 2, ...
             'butter', 'linear');
+
+        % plot observed seismogram
+        wh = and(t_relative >= -10, t_relative <= 30);
+        lo = plot(t_relative, seis_o2 / max(abs(seis_o2(wh))), 'LineWidth', 1, 'Color', 'k');
+        xlim([-10 30])
+        grid on
+        hold on
         
         % identify synthetic pressure file
         stationid = indeks(obs_struct.metadata.KSTNM{ic(ii_cases(ii))}, '2:5');
@@ -116,17 +186,76 @@ for kk = 1:2
         % normalize
         t_shift = obs_struct.t_shifts(ic(ii_cases(ii)), 2);
         wh_s = and(t_relative + t_shift >= -10, t_relative + t_shift <= 30);
-        seis_p2 = seis_p2 / max(abs(seis_p2(wh_s)));
+        l2d = plot(t_relative + t_shift, seis_p2 / max(abs(seis_p2(wh_s))) + 2.5, 'LineWidth', 0.75, 'Color', 'r');
+        
+        % window for cross correlation
+        wh3 = and(t_relative >= -5, t_relative <= 5);
+        seis_o3 = seis_o2(wh3);
+        t_relative_o3 = t_relative(wh3);
+        dt_now = datetime('now');
+
+        % ask the user if they like the automatic correlation
+        % Y - Yes, N - No, Q - Quit
+        if handpick
+            prompt = "Do you like this? Y/N/Q [Y]: ";
+            txt = upper(input(prompt,"s"));
+            if isempty(txt)
+                txt = 'Y';
+            end
+            % Q means Quit
+            if strcmp(txt, 'Q')
+                return
+            elseif strcmp(txt, 'K')
+                keyboard
+            end
+            
+        else
+            txt = 'Y';
+        end
+        if ~strcmp(txt, 'Y')
+            [~, ~, lags0, cc0, ~, s0] = ccscale(seis_o3, seis_p2, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1)), fs_o, seconds(20), 'hard', false, false);
+            cc1 = cc0;
+            cc1(cc1 < 0.25 * max(cc1)) = 0;
+            [pks, locs] = findpeaks(cc1);
+            ii_locs = 1;
+            while ~strcmp(txt, 'Y') && ii_locs < length(locs)
+                t_shift = lags0(locs(ii_locs));
+                CCmax0 = pks(ii_locs);
+                Smax0 = s0(locs(ii_locs));
     
-        % normalize
-        wh = and(t_relative >= -10, t_relative <= 30);
-        plot(t_relative, seis_o2 / max(abs(seis_o2(wh))), 'LineWidth', 1, 'Color', 'k')
-        hold on
-        plot(t_relative + t_shift, seis_p2 + 2.5, 'LineWidth', 0.75, 'Color', 'r')
-        xlim([-10 30])
-        grid on
-        hold on
+                % redraw the figure
+                delete(l2d);
+                wh_s = and(t_relative + t_shift >= -10, t_relative + t_shift <= 30);
+                l2d = plot(t_relative + t_shift, seis_p2 / max(abs(seis_p2(wh_s))) + 2.5, 'LineWidth', 0.75, 'Color', 'r');
+
+                % ask if they like this
+                prompt = sprintf("Do you like this? (%d/%d) Y/N/P/Q [Y]: ", ii_locs, length(locs));
+                txt = upper(input(prompt,"s"));
+                if isempty(txt)
+                    txt = 'Y';
+                end
+
+                if strcmp(txt, 'Q')
+                    return
+                elseif strcmp(txt, 'K')
+                    keyboard
+                end
+    
+                % move to the next candidate
+                if strcmp(txt, 'P')
+                    ii_locs = max(ii_locs - 1, 1);
+                elseif strcmp(txt, 'Y')
+                else
+                    ii_locs = ii_locs + 1;
+                end
+            end
+        else
+            CCmax0 = obs_struct.CCmaxs(ic(ii_cases(ii)), 2);
+            t_shift = obs_struct.t_shifts(ic(ii_cases(ii)), 2);
+        end
+
         set(gca, 'FontSize', 9, 'TickDir', 'out')
+        ax3.Children = ax3.Children([2 1]);
 
         % read Instaseis z-displacement at the ocean bottom
         synfile = cindeks(ls2cell(sprintf('%s%d/*_%s_*.sac', synmasterdir, eventid, stationid), 1), 1);
@@ -150,11 +279,11 @@ for kk = 1:2
         % P-wave arrive the ocean bottom below the float for the first
         % time
         t0 = calculatearrivaltime(ddir);
-        tTauP = indeks(tauptime('mod', 'ak135', ...
-            'dep', obs_struct.metadata.EVDP(ic(ii_cases(ii))), ...
-            'ph', 'p,P,PKP,PKIKP', ...
-            'deg', obs_struct.metadata.GCARC(ic(ii_cases(ii))), ...
-            'stdp', -z(1)/1000), 1).time;
+        % tTauP = indeks(tauptime('mod', 'ak135', ...
+        %     'dep', obs_struct.metadata.EVDP(ic(ii_cases(ii))), ...
+        %     'ph', 'p,P,PKP,PKIKP', ...
+        %     'deg', obs_struct.metadata.GCARC(ic(ii_cases(ii))), ...
+        %     'stdp', -z(1)/1000), 1).time;
         tSPECFEM = t - t0 + (hdr_o.USER8 - hdr_o.T0) - (hdr_s.USER8 - hdr_s.T0); % + tTauP;
         fs_SPECFEM = (length(t) - 1) / (t(end) - t(1));
 
@@ -188,28 +317,103 @@ for kk = 1:2
         xf = xf * amp_seis_sf / amp_xbf;
 
         % compute the cross-correlation of the envelope
-        wh3 = and(t_relative >= -5, t_relative <= 10);
-        seis_o3 = seis_o2(wh3);
-        t_relative_o3 = t_relative(wh3);
-        dt_now = datetime('now');
+        
         [t_shift1, CCmax1, lags1, cc1, Smax1, s1] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1)), fs_o, seconds(15), 'soft', true, false);
         [t_shift2, CCmax2, lags2, cc2, Smax2, s2] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1) +t_shift1), fs_o, seconds(2), 'hard', false, false);
         t_shift3D = t_shift1 + t_shift2;
 
-        plot(t_relative + t_shift3D, xf / max(abs(xf)) - 2.5, 'LineWidth', 0.75, 'Color', [0 0.2 0.9])
-        title(sprintf('cc: %.2f | \\Delta\\tau: %.2f s | s: %.2g', CCmax2, t_shift3D, Smax2))
+        l3d = plot(t_relative + t_shift3D, xf / max(abs(xf)) - 2.5, 'LineWidth', 0.75, 'Color', [0 0.2 0.9]);
 
-        xlabel('time since picked P-wave arrival (s)')
-        legend('observed', ...
-            sprintf('2D (cc: %.2f, \\Delta\\tau: %.2f s)', ...
-            obs_struct.CCmaxs(ic(ii_cases(ii)), 2), ...
-            obs_struct.t_shifts(ic(ii_cases(ii)), 2)), ...
+        xlabel('time since picked P-wave (s)')
+        legend(sprintf('2D (cc: %.2f, \\Delta\\tau: %.2f s)', ...
+            CCmax0, t_shift), 'observed', ...
             sprintf('3D (cc: %.2f, \\Delta\\tau: %.2f s)', ...
             CCmax2, t_shift3D), 'Location', 'southoutside')
         yticks([-2.5 0 2.5]);
         nolabels(gca, 2);
-        set(gca, 'Position', [0.038+xposshift(ii)  0.14 0.15 0.26])
+        set(gca, 'Position', [0.038+xposshift(ii)  0.14 0.15 0.26], ...
+            'YLim', [-4.5 4])
+
+        % ask the user if they like the automatic correlation
+        if handpick
+            prompt = "Do you like this? Y/N/Q [Y]: ";
+            txt = upper(input(prompt,"s"));
+            if isempty(txt)
+                txt = 'Y';
+            end
+    
+            if strcmp(txt, 'Q')
+                return
+            elseif strcmp(txt, 'K')
+                keyboard
+            end
+    
+            % handpick system
+            [t_shift3, CCmax3, lags3, cc3, Smax3, s3] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1)), fs_o, seconds(20), 'hard', false, false);
+            cc4 = cc3;
+            cc4(cc4 < 0.25 * max(cc4)) = 0;
+            [pks, locs] = findpeaks(cc4);
+            ii_locs = 1;
+            while ~strcmp(txt, 'Y') && ii_locs < length(locs)
+                t_shift3D = lags3(locs(ii_locs));
+                CCmax3 = pks(ii_locs);
+                Smax3 = s3(locs(ii_locs));
+    
+                % redraw the figure
+                delete(l3d);
+                l3d = plot(t_relative + t_shift3D, xf / max(abs(xf)) - 2.5, 'LineWidth', 0.75, 'Color', [0 0.2 0.9]);
+                
+                xlabel('time since picked P-wave (s)')
+                legend(sprintf('2D (cc: %.2f, \\Delta\\tau: %.2f s)', ...
+                    CCmax0, t_shift), 'observed', ...
+                    sprintf('3D (cc: %.2f, \\Delta\\tau: %.2f s)', ...
+                    CCmax3, t_shift3D), 'Location', 'southoutside')
+                yticks([-2.5 0 2.5]);
+                nolabels(gca, 2);
+    
+                % ask if they like this
+                prompt = sprintf("Do you like this? (%d/%d) Y/N/P/Q [Y]: ", ii_locs, length(locs));
+                txt = upper(input(prompt,"s"));
+                if isempty(txt)
+                    txt = 'Y';
+                end
+    
+                if strcmp(txt, 'Q')
+                    return
+                elseif strcmp(txt, 'K')
+                    keyboard
+                end
+    
+                % move to the next candidate
+                if strcmp(txt, 'P')
+                    ii_locs = max(ii_locs - 1, 1);
+                elseif strcmp(txt, 'Y')
+                else
+                    ii_locs = ii_locs + 1;
+                end
+            end
+        end
+    % calculate the correlation coefficient between 2D and 3D runs
+    wh2d = and(t_relative + t_shift >= -10, t_relative + t_shift <= 30);
+    wh3d = and(t_relative + t_shift3D >= -10, t_relative + t_shift3D <= 30);
+
+    seis_p2 = seis_p2(wh2d);
+    seis_p3 = xf(wh3d);
+
+    length_p = min(length(seis_p2), length(seis_p3));
+
+    [R, L] = xcorr(seis_p2(1:length_p), seis_p3(1:length_p), 'coeff');
+    title(sprintf('CC: %.2f', max(R)), 'FontWeight', 'normal')
+    subtitle(' ', 'FontSize', 2)
+
+    % Bandpass corner frequency information
+    ax3_fc = axes('Position', [0.128+xposshift(ii) 0.14 0.06 0.025]);
+    axeslabel(ax3_fc, 0.5, 0.5, sprintf('%.2f--%.2f Hz', fc(1), fc(2)), ...
+        'FontSize', 8, 'HorizontalAlignment', 'center');
+    nolabels(ax3_fc, 3)
+    set(ax3_fc, 'Box', 'on', 'XTick', [], 'YTick', [])
     end
+
     set(gcf, 'Renderer', 'painters')
     figdisp(sprintf('%s_%s_%02d-%02d', mfilename, keyfolders{kk}, ii_cases(1), ii_cases(end)), [], [], 2, [], 'epstopdf');
 end
