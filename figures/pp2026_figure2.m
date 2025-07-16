@@ -1,5 +1,7 @@
-function stats = pp2026_figure2(obs_struct, obsmasterdir, synmasterdir, presmasterdir, handpick)
-% PP2026_FIGURE2(obs_struct, obsmasterdir, synmasterdir, presmasterdir, handpick)
+function stats = pp2026_figure2(obs_struct, obsmasterdir, synmasterdir, ...
+    presmasterdir, handpick, bath, stats)
+% stats = PP2026_FIGURE2(obs_struct, obsmasterdir, synmasterdir, ...
+%     presmasterdir, handpick, handpick, bath, stats_input)
 %
 % Makes figure 2A and 2B for Pipatprathanporn+2026 paper.
 %
@@ -28,22 +30,52 @@ function stats = pp2026_figure2(obs_struct, obsmasterdir, synmasterdir, presmast
 %              the plotting in case you have made a mistake and want to
 %              start over. You may activate the keyword statement (K) to
 %              debug.
+% bath              source for bathymetry plots
+%     'GEBCO' [default] -- interpolated bathymetry grid from GEBCO
+%     'SPECFEM'         -- tapered bathymetry grid used for SPECFEM3D run
+% stats_input       Input correlation travel-time measurement see STATS
 %
-% Last modified by sirawich-at-princeton.edu, 07/15/2025
+% OUTPUT:
+% stats             struct with a following fields
+% - is_low              whether this entry is a LOWCC run
+% - id                  which entry from obs_struct (input) to refer to
+% - mean                "mean" elevation of [1D 2D] bathymetry 
+%                       If bath == 'SPECFEM', the second column is the edge
+%                       elevation of the interface, used for FK injection.
+% - std                 standard deviation elevation of [1D 2D] bathymetry
+% - t_shifts            time shifts applied to the [2D 3D] synthetics. Note
+%                       that 2D synthetics use 1D bathymetry, and 3D
+%                       synthetics use 2D bathymetry.
+% - ccmaxs              A 5-column matrix with a following columns
+%                           1. 2D to observed over [-5 5] window
+%                           2. 3D to observed over [-5 5] window
+%                           3. 2D to 3D over [-10 30] window
+%                           4. 2D to observed over [-10 30] window
+%                           5. 3D to observed over [-10 30] window
+%
+% Last modified by sirawich-at-princeton.edu, 07/16/2025
 
 defval('handpick', false)
+defval('bath', 'GEBCO')
+defval('stats', [])
 
 keywords = {'ascend', 'descend'};
 keyfolders = {'LOWCC', 'HIGHCC'};
 letterlabel = {'a', 'b', 'c', 'd', 'e'};
 
 % record pick stats
-stats.is_low = nan(60, 1);
-stats.id = nan(60, 1);
-stats.mean = nan(60, 2);
-stats.std = nan(60, 2);
-stats.t_shifts = nan(60, 2);
-stats.ccmaxs = nan(60, 3);
+if isempty(stats)
+    have_stats_input = false;
+
+    stats.is_low = nan(60, 1);
+    stats.id = nan(60, 1);
+    stats.mean = nan(60, 2);
+    stats.std = nan(60, 2);
+    stats.t_shifts = nan(60, 2);
+    stats.ccmaxs = nan(60, 5);
+else
+    have_stats_input = true;
+end
 
 for pp = 1:6
     ii_cases_low_cc = [1 2 3 4 5] + 5 * (pp - 1);%[1 2 14 9 10];
@@ -68,23 +100,40 @@ for pp = 1:6
         xposshift = [0 0.2 0.4 0.6 0.8];
         
         for ii = 1:5
+            ii_stats = (kk-1) * 30 + ii_cases(ii);
+
             %% Top row: bird-eye-view bathymetry plot
             [ll, tt, zz, llons, llats] = ...
                 bathymetryprofile2d([20000 20000], [81 81], ...
                 [obs_struct.metadata.STLO(ic(ii_cases(ii))) ...
                 obs_struct.metadata.STLA(ic(ii_cases(ii)))], ...
                 obs_struct.metadata.BAZ(ic(ii_cases(ii)))+180);
-            % ddir = fullfile(getenv('REMOTE3D'), '20250714_MERMAID_INSTASEIS', ...
-            %     sprintf('LAYERED_OC_MERMAID_%s_%02d', keyfolders{kk}, ...
-            %     ii_cases(ii)));
-            % itfs = loadinterfacefiles3d(fullfile(ddir, 'DATA', ...
-            %     'meshfem3D_files', 'interfaces.dat'));
-            % zz = itfs{1}.Z';
+
+            % This is the mean elevation used for SPECFEM2D runs in the
+            % past
+            stats.mean(ii_stats, 1) = mean(zz(41, :));
+            stats.std(ii_stats, 1) = std(zz(41, :));
+
+            if ~strcmpi(bath, 'GEBCO')
+                ddir = fullfile(getenv('REMOTE3D'), '20250714_MERMAID_INSTASEIS', ...
+                    sprintf('LAYERED_OC_MERMAID_%s_%02d', keyfolders{kk}, ...
+                    ii_cases(ii)));
+                itfs = loadinterfacefiles3d(fullfile(ddir, 'DATA', ...
+                    'meshfem3D_files', 'interfaces.dat'));
+                zz = itfs{1}.Z';
+
+                % "mean" bathymetry for plotting is the edge elevation
+                mean_zz = zz(1,1);
+                std_zz = std(zz(:));
+            else
+                mean_zz = mean(zz(:));
+                std_zz = std(zz(:));
+            end
         
             subplot('Position', [0.030+xposshift(ii) 0.65 0.16 0.2562])
             imagesc([-10 10], [-10 10], rot90(zz'));
             colormap(kelicol);
-            clim(mean(zz(:) + std(zz(:)) * [-3 3]))
+            clim(mean_zz + std_zz * [-3 3])
             % cb = colorbar('Location', 'southoutside');
             % cb.Label.String = 'elevation (m)';
             % cb.TickDirection = 'out';
@@ -113,14 +162,14 @@ for pp = 1:6
             % add mean and std info the corners
             ax1_mean = axes('Position', [0.038+xposshift(ii) 0.68 0.07 0.025]);
             axeslabel(ax1_mean, 0.5, 0.5, sprintf('\\mu = %.3f km', ...
-                round(mean(zz(:)))/1000), 'FontSize', 8, ...
+                round(mean_zz)/1000), 'FontSize', 8, ...
                 'HorizontalAlignment', 'center');
             nolabels(ax1_mean, 3)
             set(ax1_mean, 'Box', 'on', 'XTick', [], 'YTick', [])
     
             ax1_std = axes('Position', [0.118+xposshift(ii) 0.68 0.07 0.025]);
             axeslabel(ax1_std, 0.5, 0.5, sprintf('\\sigma = %d m', ...
-                round(std(zz(:)))), 'FontSize', 8, ...
+                round(std_zz)), 'FontSize', 8, ...
                 'HorizontalAlignment', 'center');
             nolabels(ax1_std, 3)
             set(ax1_std, 'Box', 'on', 'XTick', [], 'YTick', [])
@@ -154,10 +203,10 @@ for pp = 1:6
             xticklabels(-10:5:10)
             xlabel('radial position (km)')
             ylabel('elevation (km)')
-            ylim(mean(zz(:)/1000 + [-3 3] * std(zz(:)) / 1000))
-            ylim(mean(zz(:)/1000 + 1.1*[-1 1] * max(abs(zz(:)-mean(zz(:))))/ 1000));
-            getzm(ii)=mean(zz(:))/1000;
-            getzs(ii)=max(abs(zz(:)-mean(zz(:))))/1000;
+            ylim(mean_zz/1000 + [-3 3] * std_zz / 1000)
+            ylim(mean_zz/1000 + 1.1*[-1 1] * max(abs(zz(:)-mean_zz))/ 1000);
+            getzm(ii)=mean_zz/1000;
+            getzs(ii)=max(abs(zz(:)-mean_zz))/1000;
            
             
             %% Bottom row: seismograms
@@ -211,8 +260,12 @@ for pp = 1:6
             seis_p2 = bandpass(detrend(seis_p), fs_p, fc(1), fc(2), 4, 2, ...
                 'butter', 'linear');
     
-            % normalize
-            t_shift = obs_struct.t_shifts(ic(ii_cases(ii)), 2);
+            % normalize and plot
+            if have_stats_input
+                t_shift = stats.t_shifts(ii_stats, 1);
+            else
+                t_shift = obs_struct.t_shifts(ic(ii_cases(ii)), 2);
+            end
             wh_s = and(t_relative + t_shift >= -10, t_relative + t_shift <= 30);
             l2d = plot(t_relative + t_shift, seis_p2 / max(abs(seis_p2(wh_s))) + 2.5, 'LineWidth', 0.75, 'Color', 'r');
             
@@ -278,8 +331,13 @@ for pp = 1:6
                     end
                 end
             else
-                CCmax0 = obs_struct.CCmaxs(ic(ii_cases(ii)), 2);
-                t_shift = obs_struct.t_shifts(ic(ii_cases(ii)), 2);
+                if have_stats_input
+                    CCmax0 = stats.ccmaxs(ii_stats, 1);
+                    t_shift = stats.t_shifts(ii_stats, 1);
+                else
+                    CCmax0 = obs_struct.CCmaxs(ic(ii_cases(ii)), 2);
+                    t_shift = obs_struct.t_shifts(ic(ii_cases(ii)), 2);
+                end
             end    
     
             set(gca, 'FontSize', 9, 'TickDir', 'out')
@@ -347,9 +405,14 @@ for pp = 1:6
                 xf = xf * amp_seis_sf / amp_xbf;
         
                 % compute the cross-correlation of the envelope
-                [t_shift1, CCmax1, lags1, cc1, Smax1, s1] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1)), fs_o, seconds(15), 'soft', true, false);
-                [t_shift2, CCmax2, lags2, cc2, Smax2, s2] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1) +t_shift1), fs_o, seconds(2), 'hard', false, false);
-                t_shift3D = t_shift1 + t_shift2;
+                if have_stats_input
+                    CCmax2 = stats.ccmaxs(ii_stats, 2);
+                    t_shift3D = stats.t_shifts(ii_stats, 2);
+                else
+                    [t_shift1, CCmax1, lags1, cc1, Smax1, s1] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1)), fs_o, seconds(15), 'soft', true, false);
+                    [t_shift2, CCmax2, lags2, cc2, Smax2, s2] = ccscale(seis_o3, xf, dt_now + seconds(t_relative_o3(1)), dt_now + seconds(t_relative(1) +t_shift1), fs_o, seconds(2), 'hard', false, false);
+                    t_shift3D = t_shift1 + t_shift2;
+                end
         
                 wh_s3d = and(t_relative + t_shift3D >= -10, t_relative + t_shift3D <= 30);
                 l3d = plot(t_relative + t_shift3D, xf / max(abs(xf(wh_s3d))) - 2.5, 'LineWidth', 0.75, 'Color', [0 0.2 0.9]);
@@ -438,6 +501,16 @@ for pp = 1:6
 
                 title(sprintf('2D-3D CC: %.2f', CCmax_2D_3D), 'FontWeight', 'normal')
                 subtitle(' ', 'FontSize', 2)
+
+                % calculate the correlation coefficient to the observed
+                % seismogram over the entire window (-10 to 30 seconds).
+                seis_o4 = seis_o2(wh);
+                M = corrcoef(seis_o4, seis_p2);
+                stats.ccmaxs(ii_stats, 4) = M(1, 2);
+                text(-8, 3, sprintf('%.2f', M(1, 2)), 'FontSize', 9, 'Color', 'r', 'VerticalAlignment', 'middle')
+                M = corrcoef(seis_o4, seis_p3);
+                stats.ccmaxs(ii_stats, 5) = M(1, 2);
+                text(-8, -2, sprintf('%.2f', M(1, 2)), 'FontSize', 9, 'Color', [0 0.2 0.9], 'VerticalAlignment', 'middle')
             catch ME
                 t_shift3D = nan;
                 CCmax2 = nan;
@@ -466,13 +539,10 @@ for pp = 1:6
             set(ax3_fc, 'Box', 'on', 'XTick', [], 'YTick', [])
 
             % gather pick stats
-            ii_stats = (kk-1) * 30 + (pp-1) * 5 + ii;
             stats.is_low(ii_stats) = (kk == 1);
             stats.id(ii_stats) = ic(ii_cases(ii));
-            stats.mean(ii_stats, 1) = mean(zz(41, :));
-            stats.mean(ii_stats, 2) = mean(zz(:));
-            stats.std(ii_stats, 1) = std(zz(41, :));
-            stats.std(ii_stats, 2) = std(zz(:));
+            stats.mean(ii_stats, 2) = mean_zz;
+            stats.std(ii_stats, 2) = std_zz;
             stats.t_shifts(ii_stats, 1) = t_shift;
             stats.t_shifts(ii_stats, 2) = t_shift3D;
             stats.ccmaxs(ii_stats, 1) = CCmax0;
