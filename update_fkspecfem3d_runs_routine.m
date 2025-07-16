@@ -29,7 +29,7 @@ function update_fkspecfem3d_runs_routine(obs_struct, synmasterdir, specmasterdir
 % SEE ALSO:
 % ADDOCEANBOTTOM, STFMAKER
 % 
-% Last modified by sirawich-at-princeton.edu, 07/14/2025
+% Last modified by sirawich-at-princeton.edu, 07/16/2025
 
 defval('specmasterdir', ...
     fullfile(getenv('REMOTE3D'), '20250714_MERMAID_INSTASEIS'))
@@ -62,6 +62,15 @@ for ii = 1:n
 
     % update ocean bottom
     addoceanbottom(ddir, zz - z0, z0, true);
+
+    % fix the elevation of the mermaid
+    % the elevation of the virtual OBS has been adjusted in addoceanbottom
+    [~, name, network, x, y, z] = readstations3d(fullfile(ddir, 'DATA', ...
+        'STATIONS'));
+    z(2) = -obs_struct.metadata.STDP(ic(ii));
+    stations = struct('name', {name}, 'network', {network}, 'lat', y, ...
+        'lon', x, 'elev', z, 'z', z);
+    writestations3d(stations, fullfile(ddir, 'DATA', 'STATIONS'))
 
     % update incident angle FKMODEL file
     fkmodel = loadfkmodel(fullfile(ddir, 'DATA', 'FKMODEL'));
@@ -112,6 +121,15 @@ for ii = 1:n
 
     % update ocean bottom
     addoceanbottom(ddir, zz - z0, z0, true);
+
+    % fix the elevation of the mermaid
+    % the elevation of the virtual OBS has been adjusted in addoceanbottom
+    [~, name, network, x, y, z] = readstations3d(fullfile(ddir, 'DATA', ...
+        'STATIONS'));
+    z(2) = -obs_struct.metadata.STDP(ic(ii));
+    stations = struct('name', {name}, 'network', {network}, 'lat', y, ...
+        'lon', x, 'elev', z, 'z', z);
+    writestations3d(stations, fullfile(ddir, 'DATA', 'STATIONS'))
 
     % update incident angle FKMODEL file
     fkmodel = loadfkmodel(fullfile(ddir, 'DATA', 'FKMODEL'));
