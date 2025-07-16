@@ -1,5 +1,5 @@
-function stfmaker(obs_struct, synmasterdir, specmasterdir)
-% STFMAKER(obs_struct, synmasterdir, specmasterdir)
+function stfmaker(obs_struct, synmasterdir, specmasterdir, n, min_snr, min_gcarc)
+% STFMAKER(obs_struct, synmasterdir, specmasterdir, n, min_snr, min_gcarc)
 %
 % Prepares stf_file for FK-SPECFEM3D runs from Instaseis seimogram. This
 % will override the existing stf_file.txt in the directories.
@@ -18,18 +18,29 @@ function stfmaker(obs_struct, synmasterdir, specmasterdir)
 % specmasterdir     the master directory to the input folders from
 %                   FK-SPECFEM3D run for fluid-solid setting. Must have the
 %                   following subdirectories
-%   - LAYERED_OC_MERMAID_HIGHCC_**     ** is 01 to 15
-%   - LAYERED_OC_MERMAID_LOWCC_**      ** is 01 to 15
+%   - LAYERED_OC_MERMAID_HIGHCC_**     ** is 01 to n  (see below)
+%   - LAYERED_OC_MERMAID_LOWCC_**      ** is 01 to n  (see below)
+% n                 number of runs for HIGHCC or LOWCC  [default: 15]
+% min_snr           Signal-to-noise ratio cut-off       [default: 0]
+% min_gcarc         Epicentral distance cut-off         [default: 0]
 % 
-% Last modified by sirawich-at-princeton.edu, 07/07/2025
+% Last modified by sirawich-at-princeton.edu, 07/14/2025
 
-deval('specmasterdir', ...
-    fullfile(getenv('REMOTE3D'), '20250629_MERMAID_INSTASEIS'))
+defval('specmasterdir', ...
+    fullfile(getenv('REMOTE3D'), '20250714_MERMAID_INSTASEIS'))
+defval('n', 15)
+defval('min_snr', 0)
+defval('min_gcarc', 0)
+
+wh_valid = and(obs_struct.snr(:,2) > min_snr, ...
+    obs_struct.metadata.GCARC > min_gcarc);
+ic_list = indeks((1:length(obs_struct.CCmaxs(:,2)))', wh_valid);
 
 % sort the observations by decreasing correlation coefficient
-[~, ic] = sort(obs_struct.CCmaxs(:,2), 'descend');
+[~, ic] = sort(obs_struct.CCmaxs(wh_valid,2), 'descend');
+ic = ic_list(ic);
 % loop through the runs
-for ii = 1:15
+for ii = 1:n
     % identify which Instaseis syntheteic seismogram to read
     stationid = indeks(obs_struct.metadata.KSTNM{ic(ii)}, '2:5');
     eventid = obs_struct.metadata.USER7(ic(ii));
@@ -55,8 +66,9 @@ for ii = 1:15
 end
 
 % sort the observations by increasing correlation coefficient
-[~, ic] = sort(obs_struct.CCmaxs(:,2), 'ascend');
-for ii = 1:15
+[~, ic] = sort(obs_struct.CCmaxs(wh_valid,2), 'ascend');
+ic = ic_list(ic);
+for ii = 1:n
     % identify which Instaseis syntheteic seismogram to read
     stationid = indeks(obs_struct.metadata.KSTNM{ic(ii)}, '2:5');
     eventid = obs_struct.metadata.USER7(ic(ii));
